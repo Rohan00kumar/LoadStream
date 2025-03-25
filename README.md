@@ -107,6 +107,9 @@ The objective function is clipped to prevent large updates:
 | High response time | Tune reward structure to favor faster response times |
 
 ---
+##  **For Run App**
+use command `streamlit run app.py`
+
 
 ## 📋 **To-Do List**
 ✅ Implement PPO with value clipping.  
