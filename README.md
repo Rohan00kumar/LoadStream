@@ -119,4 +119,8 @@ The objective function is clipped to prevent large updates:
 ## 🤝 **Contributions**
 Feel free to:
 - Open an issue for bug reports or feature requests.
+<<<<<<< HEAD
 - Submit a pull request with improvements.
+=======
+- Submit a pull request with improvements.
+>>>>>>> dd1b87f741a11389c3d19affaf3eae098283e8b9

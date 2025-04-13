@@ -8,7 +8,7 @@ env = LoadBalancer()
 
 # Run a test to gather data
 obs = env.reset()
-for _ in range(50):
+for _ in range(100):
     action = env.action_space.sample()  # Use random action for testing visualization
     obs, reward, done, _ = env.step(action)
 

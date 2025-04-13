@@ -1,0 +1,12 @@
+[
+  {
+    "run_id": "0565328e",
+    "num_servers": 12,
+    "num_requests": 23,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.2,
+    "reward": 0.9408638963402169,
+    "final_report": "outputs/0565328e/final_report.png",
+    "gif": "outputs/0565328e/adaptive_load_balancing.gif"
+  }
+]

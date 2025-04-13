@@ -1,0 +1,142 @@
+[
+  {
+    "run_id": "2a6ee7a9",
+    "num_servers": 11,
+    "num_requests": 23,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.2,
+    "reward": -1.3944977617464214,
+    "final_report": "outputs/2a6ee7a9/final_report.png",
+    "gif": "outputs/2a6ee7a9/adaptive_load_balancing.gif"
+  },
+  {
+    "run_id": "2c706922",
+    "num_servers": 12,
+    "num_requests": 33,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.2,
+    "reward": -13.13270999561551,
+    "final_report": "outputs/2c706922/final_report.png",
+    "gif": "outputs/2c706922/adaptive_load_balancing.gif"
+  },
+  {
+    "run_id": "10cffafb",
+    "num_servers": 12,
+    "num_requests": 12,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.2,
+    "reward": -1.5952783942447992,
+    "final_report": "outputs/10cffafb/final_report.png",
+    "gif": "outputs/10cffafb/adaptive_load_balancing.gif"
+  },
+  {
+    "run_id": "af4a0dcc",
+    "num_servers": 8,
+    "num_requests": 23,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.2,
+    "reward": 1.6884703425229743,
+    "final_report": "outputs/af4a0dcc/final_report.png",
+    "gif": "outputs/af4a0dcc/adaptive_load_balancing.gif"
+  },
+  {
+    "run_id": "88316f57",
+    "num_servers": 11,
+    "num_requests": 23,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.2,
+    "reward": -2.211451856412096,
+    "final_report": "outputs/88316f57/final_report.png",
+    "gif": "outputs/88316f57/adaptive_load_balancing.gif"
+  },
+  {
+    "run_id": "7833154d",
+    "num_servers": 11,
+    "num_requests": 23,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.2,
+    "reward": -2.3878484211866575,
+    "final_report": "outputs/7833154d/final_report.png",
+    "gif": "outputs/7833154d/adaptive_load_balancing.gif"
+  },
+  {
+    "run_id": "1210741e",
+    "num_servers": 11,
+    "num_requests": 11,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.2,
+    "reward": 0.02166426166426194,
+    "final_report": "outputs/1210741e/final_report.png",
+    "gif": "outputs/1210741e/adaptive_load_balancing.gif"
+  },
+  {
+    "run_id": "708d2a4f",
+    "num_servers": 12,
+    "num_requests": 32,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.2,
+    "reward": -11.102119314884021,
+    "final_report": "outputs/708d2a4f/final_report.png",
+    "gif": "outputs/708d2a4f/adaptive_load_balancing.gif"
+  },
+  {
+    "run_id": "2f2eb01c",
+    "num_servers": 22,
+    "num_requests": 11,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.25,
+    "reward": -0.9149273877660609,
+    "final_report": "outputs/2f2eb01c/final_report.png",
+    "gif": "outputs/2f2eb01c/adaptive_load_balancing.gif"
+  },
+  {
+    "run_id": "8e5006df",
+    "num_servers": 45,
+    "num_requests": 41,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.32,
+    "reward": 0.20742928995016208,
+    "final_report": "outputs/8e5006df/final_report.png",
+    "gif": "outputs/8e5006df/adaptive_load_balancing.gif"
+  },
+  {
+    "run_id": "b7edef80",
+    "num_servers": 11,
+    "num_requests": 32,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.2,
+    "reward": -6.870089851255314,
+    "final_report": "outputs/b7edef80/final_report.png",
+    "gif": "outputs/b7edef80/adaptive_load_balancing.gif"
+  },
+  {
+    "run_id": "bd0938f9",
+    "num_servers": 11,
+    "num_requests": 11,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.2,
+    "reward": -0.7741851484351485,
+    "final_report": "outputs/bd0938f9/final_report.png",
+    "gif": "outputs/bd0938f9/adaptive_load_balancing.gif"
+  },
+  {
+    "run_id": "3186802a",
+    "num_servers": 11,
+    "num_requests": 45,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.2,
+    "reward": -8.611416250554935,
+    "final_report": "outputs/3186802a/final_report.png",
+    "gif": "outputs/3186802a/adaptive_load_balancing.gif"
+  },
+  {
+    "run_id": "91f68591",
+    "num_servers": 10,
+    "num_requests": 200,
+    "learnig_rate": 0.1,
+    "clip_ratio": 0.2,
+    "reward": -100.50724297089143,
+    "final_report": "outputs/91f68591/final_report.png",
+    "gif": "outputs/91f68591/adaptive_load_balancing.gif"
+  }
+]
