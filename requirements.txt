@@ -6,6 +6,5 @@ numpy
 pandas
 scikit-learn
 uuid
-json
 csv
 gunicorn
