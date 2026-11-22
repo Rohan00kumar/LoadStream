@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function Home() {
   const [copied, setCopied] = useState(false);
@@ -32,23 +33,23 @@ export default function Home() {
       {/* Top Navbar */}
       <header className="orbit-header">
         <nav className="orbit-navbar">
-          <a href="#home" className="orbit-logo">
+          <Link href="#home" className="orbit-logo">
             ORBIT
-          </a>
+          </Link>
 
           <div className="orbit-nav">
-            <a href="#home" className="orbit-nav-link">
+            <Link href="#home" className="orbit-nav-link">
               Home
-            </a>
-            <a href="#simulate" className="orbit-nav-link">
+            </Link>
+            <Link href="/simulate" className="orbit-nav-link">
               Simulate
-            </a>
-            <a href="#features" className="orbit-nav-link">
+            </Link>
+            <Link href="#features" className="orbit-nav-link">
               Features
-            </a>
-            <a href="#services" className="orbit-nav-link">
+            </Link>
+            <Link href="#services" className="orbit-nav-link">
               Services
-            </a>
+            </Link>
           </div>
         </nav>
       </header>
@@ -416,6 +417,146 @@ export default function Home() {
                   {/* Central Balance Indicator */}
                   <circle cx="160" cy="80" r="6" fill="#10b981" />
                 </svg>
+              </div>
+            </div>
+
+            {/* Explore Simulation Labs Section (matching user design) */}
+            <div className="sim-labs-wrapper" style={{ marginTop: "40px" }}>
+              <div className="sim-labs-header">
+                <h3 className="sim-labs-title" style={{ fontSize: "1.85rem" }}>
+                  Explore Simulation Labs
+                </h3>
+                <p className="sim-labs-subtitle">
+                  Experiment with algorithms, APIs, infrastructure, and
+                  real-world scenarios.
+                </p>
+              </div>
+
+              <div className="sim-labs-grid">
+                <Link href="/simulate" className="sim-card sim-card-arena">
+                  <div className="sim-card-top">
+                    <div className="sim-icon-box">
+                      <svg
+                        width="26"
+                        height="26"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#a78bfa"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M18 4l3 3-3 3" />
+                        <path d="M18 20l3-3-3-3" />
+                        <circle cx="6" cy="7" r="2.5" />
+                        <circle cx="6" cy="17" r="2.5" />
+                        <path d="M8.5 7h4a4 4 0 0 1 4 4v2a4 4 0 0 0 4 4h0.5" />
+                        <path d="M8.5 17h4a4 4 0 0 0 4-4V11a4 4 0 0 1 4-4h0.5" />
+                      </svg>
+                    </div>
+                    <h3 className="sim-card-name">Algorithm Arena</h3>
+                    <p className="sim-card-desc">
+                      Compare Round Robin, Least Connections, PPO, and more.
+                    </p>
+                  </div>
+                  <div className="sim-card-cta cta-purple">
+                    <span>Explore Lab</span>
+                    <span className="sim-arrow">→</span>
+                  </div>
+                </Link>
+
+                <Link href="/simulate" className="sim-card sim-card-api">
+                  <div className="sim-card-top">
+                    <div className="sim-icon-box">
+                      <svg
+                        width="26"
+                        height="26"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#818cf8"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="16 18 22 12 16 6" />
+                        <polyline points="8 6 2 12 8 18" />
+                      </svg>
+                    </div>
+                    <h3 className="sim-card-name">API Testing Lab</h3>
+                    <p className="sim-card-desc">
+                      Send requests, inspect responses, and measure latency.
+                    </p>
+                  </div>
+                  <div className="sim-card-cta cta-indigo">
+                    <span>Test APIs</span>
+                    <span className="sim-arrow">→</span>
+                  </div>
+                </Link>
+
+                <Link href="/simulate" className="sim-card sim-card-infra">
+                  <div className="sim-card-top">
+                    <div className="sim-icon-box">
+                      <svg
+                        width="26"
+                        height="26"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#34d399"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="12" cy="5" r="3" />
+                        <circle cx="6" cy="19" r="3" />
+                        <circle cx="18" cy="19" r="3" />
+                        <line x1="12" y1="8" x2="6" y2="16" />
+                        <line x1="12" y1="8" x2="18" y2="16" />
+                      </svg>
+                    </div>
+                    <h3 className="sim-card-name">Infrastructure Playground</h3>
+                    <p className="sim-card-desc">
+                      Build virtual servers and simulate traffic and failures.
+                    </p>
+                  </div>
+                  <div className="sim-card-cta cta-green">
+                    <span>Build Environment</span>
+                    <span className="sim-arrow">→</span>
+                  </div>
+                </Link>
+
+                <Link href="/simulate" className="sim-card sim-card-scenario">
+                  <div className="sim-card-top">
+                    <div className="sim-icon-box">
+                      <svg
+                        width="26"
+                        height="26"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#fbbf24"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                        <path d="M6 12v5c0 2 3 3 6 3s6-1 6-3v-5" />
+                      </svg>
+                    </div>
+                    <h3 className="sim-card-name">Scenario Explorer</h3>
+                    <p className="sim-card-desc">
+                      Learn through guided real-world infrastructure problems.
+                    </p>
+                  </div>
+                  <div className="sim-card-cta cta-amber">
+                    <span>Explore Scenarios</span>
+                    <span className="sim-arrow">→</span>
+                  </div>
+                </Link>
+              </div>
+
+              {/* Centered bottom timeline connector matching screenshot */}
+              <div className="sim-bottom-timeline">
+                <div className="sim-timeline-stem" />
+                <div className="sim-timeline-circle" />
               </div>
             </div>
           </section>

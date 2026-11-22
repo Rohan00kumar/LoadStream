@@ -714,3 +714,301 @@ html, body {
     font-size: 0.75rem;
   }
 }
+
+/* ========================================================= */
+/* Simulation Labs Design System (from screenshot)          */
+/* ========================================================= */
+
+.sim-labs-wrapper {
+  width: 100%;
+  padding-top: 10px;
+}
+
+.sim-labs-header {
+  margin-bottom: 28px;
+}
+
+.sim-labs-title {
+  font-size: clamp(1.85rem, 3.8vw, 2.6rem);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 8px;
+}
+
+.sim-labs-subtitle {
+  font-size: clamp(0.95rem, 1.8vw, 1.05rem);
+  color: #94a3b8;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.sim-labs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px 48px;
+  margin-top: 20px;
+}
+
+.sim-card {
+  position: relative;
+  background: rgba(18, 22, 31, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 26px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-decoration: none;
+  cursor: pointer;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.28s ease,
+              box-shadow 0.28s ease,
+              background-color 0.28s ease;
+}
+
+.sim-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Individual card hover & active themes */
+.sim-card-arena:hover,
+.sim-card-arena.sim-card-active {
+  transform: translateY(-4px);
+  border-color: rgba(167, 139, 250, 0.45);
+  box-shadow: 0 12px 32px -10px rgba(167, 139, 250, 0.25);
+  background: rgba(24, 28, 44, 0.85);
+}
+.sim-card-arena::before {
+  background: linear-gradient(90deg, transparent, #a78bfa, transparent);
+}
+.sim-card-arena:hover::before,
+.sim-card-arena.sim-card-active::before {
+  opacity: 1;
+}
+
+.sim-card-api:hover,
+.sim-card-api.sim-card-active {
+  transform: translateY(-4px);
+  border-color: rgba(129, 140, 248, 0.45);
+  box-shadow: 0 12px 32px -10px rgba(129, 140, 248, 0.25);
+  background: rgba(22, 28, 44, 0.85);
+}
+.sim-card-api::before {
+  background: linear-gradient(90deg, transparent, #818cf8, transparent);
+}
+.sim-card-api:hover::before,
+.sim-card-api.sim-card-active::before {
+  opacity: 1;
+}
+
+.sim-card-infra:hover,
+.sim-card-infra.sim-card-active {
+  transform: translateY(-4px);
+  border-color: rgba(52, 211, 153, 0.45);
+  box-shadow: 0 12px 32px -10px rgba(52, 211, 153, 0.25);
+  background: rgba(18, 34, 34, 0.85);
+}
+.sim-card-infra::before {
+  background: linear-gradient(90deg, transparent, #34d399, transparent);
+}
+.sim-card-infra:hover::before,
+.sim-card-infra.sim-card-active::before {
+  opacity: 1;
+}
+
+.sim-card-scenario:hover,
+.sim-card-scenario.sim-card-active {
+  transform: translateY(-4px);
+  border-color: rgba(251, 191, 36, 0.45);
+  box-shadow: 0 12px 32px -10px rgba(251, 191, 36, 0.25);
+  background: rgba(32, 30, 24, 0.85);
+}
+.sim-card-scenario::before {
+  background: linear-gradient(90deg, transparent, #fbbf24, transparent);
+}
+.sim-card-scenario:hover::before,
+.sim-card-scenario.sim-card-active::before {
+  opacity: 1;
+}
+
+.sim-card-top {
+  display: flex;
+  flex-direction: column;
+}
+
+.sim-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 14px;
+  transition: transform 0.28s ease;
+}
+
+.sim-card:hover .sim-icon-box {
+  transform: scale(1.08) translateY(-2px);
+}
+
+.sim-card-name {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.sim-card-desc {
+  font-size: 0.92rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin-bottom: 22px;
+}
+
+.sim-card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: gap 0.2s ease, opacity 0.2s ease;
+  user-select: none;
+}
+
+.sim-card:hover .sim-card-cta {
+  gap: 12px;
+}
+
+.sim-arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.sim-card:hover .sim-arrow {
+  transform: translateX(4px);
+}
+
+/* Colors for CTAs */
+.cta-purple { color: #a78bfa; }
+.cta-indigo { color: #818cf8; }
+.cta-green { color: #34d399; }
+.cta-amber { color: #fbbf24; }
+
+/* Timeline connector at bottom */
+.sim-bottom-timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 36px;
+  position: relative;
+}
+
+.sim-timeline-stem {
+  width: 2px;
+  height: 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.3));
+}
+
+.sim-timeline-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0d1117;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(167, 139, 250, 0.18);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.sim-timeline-circle::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #a78bfa;
+  box-shadow: 0 0 8px #a78bfa;
+}
+
+/* Interactive Sandbox Workspace */
+.sim-interactive-stage {
+  margin-top: 32px;
+  background: rgba(16, 21, 30, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 28px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  animation: simFadeIn 0.35s ease-out;
+}
+
+@keyframes simFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stage-tab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.stage-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.22rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.stage-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid;
+}
+
+/* Responsive adjustment for sim labs */
+@media (max-width: 840px) {
+  .sim-labs-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  
+  .sim-card {
+    padding: 22px 20px;
+  }
+
+  .sim-interactive-stage {
+    padding: 20px 16px;
+  }
+}
