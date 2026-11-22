@@ -8,8 +8,8 @@ export default function SimulateHubPage() {
     <div className="orbit-page">
       <Navbar />
 
-      <main className="orbit-main page-enter-anim">
-        <div className="sim-labs-wrapper">
+      <main className="orbit-main page-enter-anim" style={{ minHeight: "calc(100vh - 160px)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <div className="sim-labs-wrapper" style={{ padding: "40px 0" }}>
           {/* Header matching user's design */}
           <div className="sim-labs-header">
             <h1 className="sim-labs-title">Explore Simulation Labs</h1>
@@ -142,39 +142,6 @@ export default function SimulateHubPage() {
                 <span className="sim-arrow">→</span>
               </div>
             </Link>
-          </div>
-
-          {/* Timeline Connector Indicator */}
-          <div className="sim-bottom-timeline">
-            <div className="sim-timeline-stem" />
-            <div className="sim-timeline-circle" />
-          </div>
-
-          {/* Features Highlights Grid */}
-          <div style={{ marginTop: "48px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "18px" }}>
-            <div style={{ padding: "20px", borderRadius: "10px", backgroundColor: "rgba(18, 22, 31, 0.6)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <span style={{ fontSize: "1.2rem", marginBottom: "8px", display: "inline-block" }}>⚡</span>
-              <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "#ffffff", marginBottom: "6px" }}>Sub-Millisecond Inference</h4>
-              <p style={{ fontSize: "0.86rem", color: "#94a3b8", lineHeight: 1.5 }}>
-                PPO neural network decisions execute in under 0.8ms without blocking event loops.
-              </p>
-            </div>
-
-            <div style={{ padding: "20px", borderRadius: "10px", backgroundColor: "rgba(18, 22, 31, 0.6)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <span style={{ fontSize: "1.2rem", marginBottom: "8px", display: "inline-block" }}>🛡️</span>
-              <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "#ffffff", marginBottom: "6px" }}>Zero-Downtime Failover</h4>
-              <p style={{ fontSize: "0.86rem", color: "#94a3b8", lineHeight: 1.5 }}>
-                Instantly routes around crashed clusters and isolates microservice bottlenecks.
-              </p>
-            </div>
-
-            <div style={{ padding: "20px", borderRadius: "10px", backgroundColor: "rgba(18, 22, 31, 0.6)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <span style={{ fontSize: "1.2rem", marginBottom: "8px", display: "inline-block" }}>📊</span>
-              <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "#ffffff", marginBottom: "6px" }}>Full Telemetry Tracing</h4>
-              <p style={{ fontSize: "0.86rem", color: "#94a3b8", lineHeight: 1.5 }}>
-                Integrated OpenTelemetry, Prometheus metrics, and Grafana observability.
-              </p>
-            </div>
           </div>
         </div>
       </main>

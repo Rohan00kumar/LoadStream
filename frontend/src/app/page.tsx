@@ -532,12 +532,6 @@ export default function Home() {
                   </div>
                 </Link>
               </div>
-
-              {/* Centered bottom timeline connector matching screenshot */}
-              <div className="sim-bottom-timeline">
-                <div className="sim-timeline-stem" />
-                <div className="sim-timeline-circle" />
-              </div>
             </div>
           </section>
 
