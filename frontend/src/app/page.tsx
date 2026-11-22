@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Navbar from "@/components/Navbar";
 
 export default function Home() {
   const [copied, setCopied] = useState(false);
@@ -31,28 +32,7 @@ export default function Home() {
   return (
     <div className="orbit-page">
       {/* Top Navbar */}
-      <header className="orbit-header">
-        <nav className="orbit-navbar">
-          <Link href="#home" className="orbit-logo">
-            ORBIT
-          </Link>
-
-          <div className="orbit-nav">
-            <Link href="#home" className="orbit-nav-link">
-              Home
-            </Link>
-            <Link href="/simulate" className="orbit-nav-link">
-              Simulate
-            </Link>
-            <Link href="#features" className="orbit-nav-link">
-              Features
-            </Link>
-            <Link href="#services" className="orbit-nav-link">
-              Services
-            </Link>
-          </div>
-        </nav>
-      </header>
+      <Navbar />
 
       {/* Main Content Area */}
       <main className="orbit-main">
@@ -433,7 +413,7 @@ export default function Home() {
               </div>
 
               <div className="sim-labs-grid">
-                <Link href="/simulate" className="sim-card sim-card-arena">
+                <Link href="/simulate/arena" className="sim-card sim-card-arena">
                   <div className="sim-card-top">
                     <div className="sim-icon-box">
                       <svg
@@ -465,7 +445,7 @@ export default function Home() {
                   </div>
                 </Link>
 
-                <Link href="/simulate" className="sim-card sim-card-api">
+                <Link href="/simulate/api-lab" className="sim-card sim-card-api">
                   <div className="sim-card-top">
                     <div className="sim-icon-box">
                       <svg
@@ -493,7 +473,7 @@ export default function Home() {
                   </div>
                 </Link>
 
-                <Link href="/simulate" className="sim-card sim-card-infra">
+                <Link href="/simulate/infrastructure" className="sim-card sim-card-infra">
                   <div className="sim-card-top">
                     <div className="sim-icon-box">
                       <svg
@@ -524,7 +504,7 @@ export default function Home() {
                   </div>
                 </Link>
 
-                <Link href="/simulate" className="sim-card sim-card-scenario">
+                <Link href="/simulate/scenarios" className="sim-card sim-card-scenario">
                   <div className="sim-card-top">
                     <div className="sim-icon-box">
                       <svg
