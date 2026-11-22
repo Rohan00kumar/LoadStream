@@ -1,0 +1,7 @@
+backend/
+database/
+.git/
+*.py
+__pycache__/
+*.sql
+*.zip

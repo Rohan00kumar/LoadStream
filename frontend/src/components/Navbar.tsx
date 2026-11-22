@@ -14,13 +14,10 @@ export default function Navbar() {
   return (
     <header className="orbit-header">
       <nav className="orbit-navbar">
-        {/* Logo with Gradient and Badge */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <Link href="/" className="orbit-logo">
-            ORBIT
-          </Link>
-          <span className="nav-badge">AI BALANCER</span>
-        </div>
+        {/* Clean Logo */}
+        <Link href="/" className="orbit-logo">
+          ORBIT
+        </Link>
 
         {/* Desktop Navigation */}
         <div className="orbit-nav desktop-nav">
@@ -42,12 +39,6 @@ export default function Navbar() {
           <Link href="/#services" className="orbit-nav-link">
             Services
           </Link>
-
-          {/* Live Status Indicator */}
-          <div className="nav-status-pill">
-            <span className="nav-pulse-dot" />
-            <span>PPO Online</span>
-          </div>
         </div>
 
         {/* Mobile Hamburger Button */}
@@ -95,7 +86,7 @@ export default function Navbar() {
             className={`orbit-nav-link ${isSimulate ? "orbit-nav-link-active" : ""}`}
             onClick={() => setMobileMenuOpen(false)}
           >
-            Simulate Labs
+            Simulate
           </Link>
           <Link
             href="/#features"
@@ -111,11 +102,6 @@ export default function Navbar() {
           >
             Services
           </Link>
-
-          <div className="nav-status-pill" style={{ width: "fit-content", marginTop: "4px" }}>
-            <span className="nav-pulse-dot" />
-            <span>System Active</span>
-          </div>
         </div>
       </nav>
     </header>
