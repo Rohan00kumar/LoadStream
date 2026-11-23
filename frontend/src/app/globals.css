@@ -1165,3 +1165,49 @@ html, body {
     display: flex;
   }
 }
+
+/* ========================================================= */
+/* Tab & Modal Transition Animations                         */
+/* ========================================================= */
+
+.tab-enter-anim {
+  animation: tabFadeSlide 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes tabFadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-enter-anim {
+  animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.progress-shimmer {
+  background: linear-gradient(90deg, #9333ea 0%, #c084fc 50%, #9333ea 100%);
+  background-size: 200% 100%;
+  animation: shimmerMove 1.6s infinite linear;
+}
+
+@keyframes shimmerMove {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+

@@ -39,7 +39,7 @@ export default function InfrastructurePage() {
       const offlineNodes = updated.filter((n) => n.status === "offline");
       if (offlineNodes.length > 0) {
         setFailoverLog(
-          `⚡ Auto-Healing Triggered: Node [${offlineNodes.map((x) => x.name).join(", ")}] isolated. Traffic dynamically redirected to healthy clusters with 0 dropped packets.`
+          `Auto-Healing Active: Node [${offlineNodes.map((x) => x.name).join(", ")}] isolated. Traffic dynamically redirected to healthy clusters with 0 dropped packets.`
         );
       } else {
         setFailoverLog(null);

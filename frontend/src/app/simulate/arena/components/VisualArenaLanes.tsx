@@ -90,10 +90,10 @@ export default function VisualArenaLanes({
                 return (
                   <div
                     key={srv.id}
-                    className={`rounded-lg border p-3 flex flex-col justify-between space-y-2 transition-all ${
+                    className={`rounded-lg border p-3 flex flex-col justify-between space-y-2 transition-all duration-300 ease-in-out ${
                       isOffline
                         ? "bg-rose-500/5 border-rose-500/30 opacity-70"
-                        : "bg-[#161b22] border-[#21262d]"
+                        : "bg-[#161b22] border-[#21262d] hover:border-slate-700"
                     }`}
                   >
                     {/* Server Header */}
@@ -139,7 +139,7 @@ export default function VisualArenaLanes({
                         </div>
                         <div className="h-1 bg-[#0d1117] rounded-full overflow-hidden border border-[#21262d]">
                           <div
-                            className={`h-full transition-all duration-200 ${
+                            className={`h-full transition-all duration-300 ease-out ${
                               cpuLoad > 85
                                 ? "bg-rose-500"
                                 : cpuLoad > 60
@@ -156,7 +156,7 @@ export default function VisualArenaLanes({
                     <button
                       type="button"
                       onClick={() => onToggleServerFail(srv.id)}
-                      className={`w-full py-1 rounded text-[10px] font-mono uppercase font-semibold transition-colors mt-1 ${
+                      className={`w-full py-1 rounded text-[10px] font-mono uppercase font-semibold transition-all duration-200 active:scale-95 mt-1 ${
                         isOffline
                           ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20"
                           : "bg-rose-500/10 border border-rose-500/20 text-rose-300 hover:bg-rose-500/20"

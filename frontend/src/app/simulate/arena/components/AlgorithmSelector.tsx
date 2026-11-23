@@ -116,7 +116,7 @@ export default function AlgorithmSelector({
               key={key}
               type="button"
               onClick={() => onToggleAlgorithm(key)}
-              className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between ${
+              className={`p-3 rounded-xl border text-left transition-all duration-200 active:scale-95 cursor-pointer relative flex flex-col justify-between ${
                 isSelected
                   ? "bg-[#161b22] border-purple-500/60 shadow-sm shadow-purple-500/10"
                   : "bg-[#0d1117] border-[#21262d] hover:border-slate-700 opacity-60 hover:opacity-100"

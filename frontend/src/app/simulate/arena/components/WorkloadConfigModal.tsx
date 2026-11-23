@@ -45,7 +45,7 @@ export default function WorkloadConfigModal({ isOpen, onClose, config, onSave }:
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl max-h-[90vh] bg-[#0d1117] border border-[#21262d] rounded-xl p-5 overflow-y-auto space-y-4 shadow-2xl font-mono text-xs"
+        className="modal-enter-anim w-full max-w-xl max-h-[90vh] bg-[#0d1117] border border-[#21262d] rounded-xl p-5 overflow-y-auto space-y-4 shadow-2xl font-mono text-xs"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

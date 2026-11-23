@@ -332,19 +332,12 @@ export default function AlgorithmArenaPage() {
       <Navbar />
 
       <main className="orbit-main page-enter-anim max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-20 space-y-5">
-        {/* Top Header Bar */}
+        {/* Navigation & Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#21262d] pb-4">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <Link
-                href="/simulate"
-                className="text-xs font-mono text-slate-500 hover:text-white transition-colors"
-              >
-                Simulation Labs
-              </Link>
-              <span className="text-slate-600 font-mono text-xs">/</span>
-              <span className="text-xs font-mono text-purple-400">Arena</span>
-            </div>
+            <Link href="/simulate" className="back-link">
+              ← Back to Simulation Labs
+            </Link>
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
               Algorithm Arena
             </h1>
@@ -362,7 +355,7 @@ export default function AlgorithmArenaPage() {
               {workloadConfig.totalRequests} Reqs @ {workloadConfig.requestsPerSecond} RPS ({workloadConfig.pattern})
             </span>
             <span
-              className={`px-2.5 py-1 rounded-md uppercase font-bold ${
+              className={`px-2.5 py-1 rounded-md uppercase font-bold transition-all duration-300 ${
                 simState === "running"
                   ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
                   : simState === "completed"
@@ -416,10 +409,10 @@ export default function AlgorithmArenaPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab("simulation")}
-                className={`px-3 py-1.5 rounded-lg transition-colors ${
+                className={`px-3 py-1.5 rounded-lg transition-all duration-200 ${
                   activeTab === "simulation"
-                    ? "bg-[#161b22] border border-[#30363d] text-white font-semibold"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "bg-[#161b22] border border-[#30363d] text-white font-semibold shadow-sm"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-[#161b22]/50"
                 }`}
               >
                 Simulation Topology
@@ -427,10 +420,10 @@ export default function AlgorithmArenaPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab("results")}
-                className={`px-3 py-1.5 rounded-lg transition-colors relative ${
+                className={`px-3 py-1.5 rounded-lg transition-all duration-200 relative ${
                   activeTab === "results"
-                    ? "bg-[#161b22] border border-[#30363d] text-white font-semibold"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "bg-[#161b22] border border-[#30363d] text-white font-semibold shadow-sm"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-[#161b22]/50"
                 }`}
               >
                 Benchmark Matrix
@@ -443,10 +436,10 @@ export default function AlgorithmArenaPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab("logs")}
-                className={`px-3 py-1.5 rounded-lg transition-colors ${
+                className={`px-3 py-1.5 rounded-lg transition-all duration-200 ${
                   activeTab === "logs"
-                    ? "bg-[#161b22] border border-[#30363d] text-white font-semibold"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "bg-[#161b22] border border-[#30363d] text-white font-semibold shadow-sm"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-[#161b22]/50"
                 }`}
               >
                 Event Log ({events.length})
@@ -454,7 +447,7 @@ export default function AlgorithmArenaPage() {
               <button
                 type="button"
                 onClick={() => setIsGuideModalOpen(true)}
-                className="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition-colors"
+                className="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-[#161b22]/50 transition-colors"
               >
                 Architecture Guide
               </button>
@@ -469,7 +462,7 @@ export default function AlgorithmArenaPage() {
 
           {/* TAB 1: SIMULATION LANES */}
           {activeTab === "simulation" && (
-            <div>
+            <div className="tab-enter-anim">
               <VisualArenaLanes
                 selectedAlgorithms={selectedAlgorithms}
                 servers={servers}
@@ -483,7 +476,7 @@ export default function AlgorithmArenaPage() {
 
           {/* TAB 2: BENCHMARK RESULTS */}
           {activeTab === "results" && (
-            <div>
+            <div className="tab-enter-anim">
               {finalResults ? (
                 <PerformanceEvaluation
                   results={finalResults}
@@ -504,7 +497,7 @@ export default function AlgorithmArenaPage() {
 
           {/* TAB 3: EVENT LOG */}
           {activeTab === "logs" && (
-            <div>
+            <div className="tab-enter-anim">
               <RealTimeEventConsole
                 events={events}
                 selectedAlgorithms={selectedAlgorithms}

@@ -111,7 +111,7 @@ export default function HistoryModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-4xl max-h-[85vh] bg-[#0d1117] border border-[#21262d] rounded-xl shadow-2xl flex flex-col overflow-hidden font-mono text-xs">
+      <div className="modal-enter-anim w-full max-w-4xl max-h-[85vh] bg-[#0d1117] border border-[#21262d] rounded-xl shadow-2xl flex flex-col overflow-hidden font-mono text-xs">
         {/* Header */}
         <div className="px-5 py-3 border-b border-[#21262d] flex items-center justify-between bg-[#161b22]">
           <div>

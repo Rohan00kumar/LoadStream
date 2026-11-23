@@ -66,7 +66,7 @@ export default function ArenaControls({
             <button
               onClick={onStart}
               disabled={!canStart}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold font-mono tracking-wide transition-all ${
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold font-mono tracking-wide transition-all duration-150 active:scale-95 ${
                 canStart
                   ? "bg-purple-600 hover:bg-purple-500 text-white shadow-sm shadow-purple-500/20"
                   : "bg-[#21262d] text-slate-500 cursor-not-allowed"
@@ -79,7 +79,7 @@ export default function ArenaControls({
           {isRunning && (
             <button
               onClick={onPause}
-              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-colors"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all duration-150 active:scale-95"
             >
               Pause
             </button>
@@ -88,7 +88,7 @@ export default function ArenaControls({
           {isPaused && (
             <button
               onClick={onResume}
-              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 transition-colors"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 transition-all duration-150 active:scale-95"
             >
               Resume
             </button>
@@ -97,7 +97,7 @@ export default function ArenaControls({
           {(isRunning || isPaused) && (
             <button
               onClick={onStop}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold font-mono bg-[#21262d] border border-[#30363d] text-slate-300 hover:text-rose-400 hover:border-rose-500/40 transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold font-mono bg-[#21262d] border border-[#30363d] text-slate-300 hover:text-rose-400 hover:border-rose-500/40 transition-all duration-150 active:scale-95"
             >
               Stop
             </button>
@@ -106,7 +106,7 @@ export default function ArenaControls({
           {(isCompleted || state === "stopped" || isPaused) && (
             <button
               onClick={onReset}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold font-mono bg-[#21262d] border border-[#30363d] text-slate-300 hover:text-white transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold font-mono bg-[#21262d] border border-[#30363d] text-slate-300 hover:text-white transition-all duration-150 active:scale-95"
             >
               Reset
             </button>
@@ -116,7 +116,7 @@ export default function ArenaControls({
             <button
               onClick={onStart}
               disabled={!canStart}
-              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold font-mono bg-purple-600 hover:bg-purple-500 text-white transition-colors"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold font-mono bg-purple-600 hover:bg-purple-500 text-white transition-all duration-150 active:scale-95"
             >
               Rerun
             </button>
@@ -192,9 +192,11 @@ export default function ArenaControls({
         </div>
 
         {/* Crisp slim progress line */}
-        <div className="w-full h-1 bg-[#161b22] rounded-full overflow-hidden border border-[#21262d]">
+        <div className="w-full h-1.5 bg-[#161b22] rounded-full overflow-hidden border border-[#21262d]">
           <div
-            className="h-full bg-purple-500 transition-all duration-150 ease-out"
+            className={`h-full transition-all duration-200 ease-out ${
+              isRunning ? "progress-shimmer" : "bg-purple-500"
+            }`}
             style={{ width: `${progressPercent}%` }}
           />
         </div>

@@ -155,7 +155,7 @@ export default function ScenariosPage() {
                 transition: "all 0.2s ease",
               }}
             >
-              {running ? "Simulating Scenario..." : "▶ Run Scenario"}
+              {running ? "Simulating Scenario..." : "Run Scenario"}
             </button>
           </div>
 

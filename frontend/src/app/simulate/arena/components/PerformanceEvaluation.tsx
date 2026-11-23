@@ -208,7 +208,7 @@ export default function PerformanceEvaluation({
 
       {/* TAB 1: METRICS TABLE */}
       {activeTab === "matrix" && (
-        <div className="overflow-x-auto border border-[#21262d] rounded-lg">
+        <div className="tab-enter-anim overflow-x-auto border border-[#21262d] rounded-lg">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-[#21262d] bg-[#161b22] text-slate-400 font-mono text-[11px]">
@@ -291,7 +291,7 @@ export default function PerformanceEvaluation({
 
       {/* TAB 2: DISTRIBUTION BARS */}
       {activeTab === "distribution" && (
-        <div className="space-y-3 font-mono text-xs">
+        <div className="tab-enter-anim space-y-3 font-mono text-xs">
           {activeResultList.map((m) => {
             const info = ALGO_LABELS[m.algorithmId];
             return (
@@ -348,7 +348,7 @@ export default function PerformanceEvaluation({
 
       {/* TAB 3: INSIGHTS */}
       {activeTab === "insights" && (
-        <div className="space-y-2 text-xs">
+        <div className="tab-enter-anim space-y-2 text-xs">
           {insights.map((insight, idx) => (
             <div
               key={idx}

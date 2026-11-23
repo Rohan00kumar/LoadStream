@@ -174,7 +174,7 @@ export default function ApiTestingLabPage() {
               </div>
 
               <span style={{ fontSize: "0.82rem", fontWeight: 600, color: responseState.isLive ? "#34d399" : "#fbbf24" }}>
-                {responseState.isLive ? "● Live Backend Connected" : "● Fallback Simulated (Port 8000 Idle)"}
+                {responseState.isLive ? "Live Backend Connected" : "Fallback Simulated (Port 8000 Idle)"}
               </span>
             </div>
 
