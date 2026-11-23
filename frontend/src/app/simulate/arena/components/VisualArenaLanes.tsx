@@ -22,295 +22,151 @@ export default function VisualArenaLanes({
 }: Props) {
   if (selectedAlgorithms.length === 0) {
     return (
-      <div
-        style={{
-          textAlign: "center",
-          padding: "48px 20px",
-          backgroundColor: "rgba(18, 22, 31, 0.5)",
-          borderRadius: "14px",
-          border: "1px dashed rgba(255, 255, 255, 0.1)",
-          marginBottom: "24px",
-        }}
-      >
-        <p style={{ color: "#94a3b8", fontSize: "0.95rem" }}>
-          Please select at least one algorithm above to view the live simulation environment.
-        </p>
+      <div className="rounded-xl border border-dashed border-[#21262d] bg-[#0d1117]/60 p-8 text-center text-xs text-slate-500 font-mono">
+        Select at least one algorithm above to render the live routing simulation.
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px", marginBottom: "28px" }}>
+    <div className="space-y-3.5">
       {selectedAlgorithms.map((algoKey) => {
         const meta = ALGORITHM_METADATA[algoKey];
         const metrics = laneMetrics[algoKey] || {};
         const results = laneResults[algoKey] || [];
         const successCount = results.filter((r) => r.status === "success").length;
         const failCount = results.filter((r) => r.status !== "success").length;
-
-        // Recent routed server
-        const lastResult = results[results.length - 1];
-        const lastTargetServerId = lastResult?.serverId;
+        const total = results.length;
 
         return (
           <div
             key={algoKey}
-            style={{
-              backgroundColor: "rgba(18, 22, 31, 0.75)",
-              border: `1.5px solid ${meta.color}40`,
-              borderRadius: "14px",
-              padding: "20px 22px",
-              boxShadow: `0 8px 30px ${meta.color}10`,
-              position: "relative",
-              overflow: "hidden",
-            }}
+            className="rounded-xl border border-[#21262d] bg-[#0d1117] p-4 space-y-3 transition-colors hover:border-[#30363d]"
           >
-            {/* Top Bar: Algorithm Name & Live Telemetry Counters */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-                paddingBottom: "14px",
-                marginBottom: "18px",
-                flexWrap: "wrap",
-                gap: "10px",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {/* Lane Header */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#21262d] pb-2.5">
+              <div className="flex items-center gap-2">
                 <span
+                  className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold"
                   style={{
-                    backgroundColor: `${meta.color}25`,
+                    backgroundColor: `${meta.color}15`,
                     color: meta.color,
-                    padding: "4px 8px",
-                    borderRadius: "6px",
-                    fontFamily: "monospace",
-                    fontWeight: 700,
-                    fontSize: "0.82rem",
+                    border: `1px solid ${meta.color}30`,
                   }}
                 >
                   {meta.shortName}
                 </span>
-                <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#ffffff" }}>
-                  {meta.name}
-                </h3>
-                <span style={{ fontSize: "0.78rem", color: "#94a3b8" }}>
-                  — {meta.tagline}
+                <span className="text-xs font-semibold text-white">{meta.name}</span>
+                <span className="text-[11px] font-mono text-slate-500">
+                  [{meta.tagline}]
                 </span>
               </div>
 
-              {/* Lane Scoreboard */}
-              <div style={{ display: "flex", gap: "16px", alignItems: "center", fontSize: "0.82rem" }}>
-                <div>
-                  <span style={{ color: "#94a3b8" }}>Processed: </span>
-                  <strong style={{ color: "#ffffff" }}>{results.length}</strong>
-                </div>
-                <div>
-                  <span style={{ color: "#94a3b8" }}>Success: </span>
-                  <strong style={{ color: "#34d399" }}>{successCount}</strong>
-                </div>
+              {/* Counters */}
+              <div className="flex items-center gap-3 text-[11px] font-mono">
+                <span className="text-slate-400">
+                  Routed: <span className="text-white font-semibold">{total}</span>
+                </span>
+                <span className="text-emerald-400">
+                  Pass: {successCount}
+                </span>
                 {failCount > 0 && (
-                  <div>
-                    <span style={{ color: "#94a3b8" }}>Dropped: </span>
-                    <strong style={{ color: "#f87171" }}>{failCount}</strong>
-                  </div>
+                  <span className="text-rose-400 font-semibold">
+                    Fail: {failCount}
+                  </span>
                 )}
               </div>
             </div>
 
-            {/* Visual Flow Pipeline: Ingress -> Router -> Server Cluster */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "180px 100px 1fr",
-                alignItems: "center",
-                gap: "16px",
-              }}
-            >
-              {/* 1. Ingress Stream / Request Queue */}
-              <div
-                style={{
-                  backgroundColor: "rgba(0, 0, 0, 0.4)",
-                  border: "1px solid rgba(255, 255, 255, 0.06)",
-                  borderRadius: "10px",
-                  padding: "14px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minHeight: "140px",
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ fontSize: "0.74rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 700, marginBottom: "8px" }}>
-                  Ingress Influx
-                </div>
-                <div
-                  style={{
-                    width: "48px",
-                    height: "48px",
-                    borderRadius: "50%",
-                    backgroundColor: "rgba(59, 130, 246, 0.15)",
-                    border: "1.5px solid rgba(59, 130, 246, 0.4)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "1.2rem",
-                    marginBottom: "8px",
-                    animation: isSimulating ? "pulse 1.2s infinite" : "none",
-                  }}
-                >
-                  ⚡
-                </div>
-                <span style={{ fontSize: "0.78rem", color: "#cbd5e1" }}>
-                  {isSimulating ? "Active Traffic Stream" : "Standby Ingress"}
-                </span>
-              </div>
+            {/* Server Nodes Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              {servers.map((srv) => {
+                const srvMetric = metrics[srv.id];
+                const activeConns = srvMetric?.activeConnections ?? 0;
+                const queueDepth = srvMetric?.queuedRequests ?? 0;
+                const cpuLoad = srvMetric?.cpuUtilizationPercent ?? (srv.isManualFailed ? 0 : 12);
+                const isOffline = srv.isManualFailed || srv.status === "offline";
 
-              {/* 2. Central Router Node */}
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  position: "relative",
-                }}
-              >
-                <div
-                  style={{
-                    width: "56px",
-                    height: "56px",
-                    borderRadius: "12px",
-                    backgroundColor: `${meta.color}20`,
-                    border: `2px solid ${meta.color}`,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: isSimulating ? `0 0 20px ${meta.color}40` : "none",
-                    transition: "all 0.3s ease",
-                  }}
-                >
-                  <span style={{ fontSize: "0.68rem", fontWeight: 800, color: meta.color }}>
-                    LB
-                  </span>
-                  <span style={{ fontSize: "0.6rem", color: "#ffffff", fontFamily: "monospace" }}>
-                    {meta.shortName}
-                  </span>
-                </div>
-                <span style={{ fontSize: "0.68rem", color: "#94a3b8", marginTop: "6px" }}>Router</span>
-              </div>
-
-              {/* 3. Connected Virtual Servers Cluster */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
-                  gap: "12px",
-                }}
-              >
-                {servers.map((srv) => {
-                  const sMetrics = metrics[srv.id];
-                  const activeConns = sMetrics?.activeConnections || 0;
-                  const queued = sMetrics?.queuedRequests || 0;
-                  const cpu = sMetrics?.cpuUtilizationPercent || 10;
-                  const isOffline = srv.status === "offline" || srv.isManualFailed;
-                  const isTargeted = lastTargetServerId === srv.id && isSimulating;
-
-                  const cpuColor =
-                    cpu > 80 ? "#ef4444" : cpu > 50 ? "#f59e0b" : "#10b981";
-
-                  return (
-                    <div
-                      key={srv.id}
-                      style={{
-                        backgroundColor: isOffline
-                          ? "rgba(239, 68, 68, 0.05)"
-                          : isTargeted
-                          ? `${meta.color}12`
-                          : "rgba(13, 17, 23, 0.7)",
-                        border: isOffline
-                          ? "1.5px solid rgba(239, 68, 68, 0.4)"
-                          : isTargeted
-                          ? `1.5px solid ${meta.color}`
-                          : "1px solid rgba(255, 255, 255, 0.08)",
-                        borderRadius: "10px",
-                        padding: "14px",
-                        position: "relative",
-                        transition: "all 0.2s ease",
-                      }}
-                    >
-                      {/* Server Title & Status */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                        <div>
-                          <strong style={{ fontSize: "0.88rem", color: isOffline ? "#94a3b8" : "#ffffff", textDecoration: isOffline ? "line-through" : "none" }}>
-                            {srv.name}
-                          </strong>
-                          <span style={{ fontSize: "0.7rem", color: "#94a3b8", marginLeft: "6px" }}>
-                            {srv.region}
-                          </span>
-                        </div>
-
-                        {/* Fail / Revive live toggle button */}
-                        <button
-                          onClick={() => onToggleServerFail(srv.id)}
-                          title={isOffline ? "Restore Server Node" : "Simulate Crash on this server"}
-                          style={{
-                            padding: "2px 7px",
-                            borderRadius: "4px",
-                            fontSize: "0.68rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            backgroundColor: isOffline ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)",
-                            border: isOffline ? "1px solid rgba(16, 185, 129, 0.4)" : "1px solid rgba(239, 68, 68, 0.4)",
-                            color: isOffline ? "#34d399" : "#fca5a5",
-                          }}
+                return (
+                  <div
+                    key={srv.id}
+                    className={`rounded-lg border p-3 flex flex-col justify-between space-y-2 transition-all ${
+                      isOffline
+                        ? "bg-rose-500/5 border-rose-500/30 opacity-70"
+                        : "bg-[#161b22] border-[#21262d]"
+                    }`}
+                  >
+                    {/* Server Header */}
+                    <div>
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-semibold text-slate-200 truncate">{srv.name}</span>
+                        <span
+                          className={`text-[9px] font-mono px-1.5 py-0.2 rounded uppercase ${
+                            isOffline
+                              ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                              : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          }`}
                         >
-                          {isOffline ? "Heal" : "Kill"}
-                        </button>
+                          {isOffline ? "Offline" : "Healthy"}
+                        </span>
+                      </div>
+                      <div className="text-[10px] font-mono text-slate-500">
+                        {srv.region} | {srv.cpuCores} cores | {srv.memoryGb}GB
+                      </div>
+                    </div>
+
+                    {/* Sockets & Queues */}
+                    <div className="space-y-1.5 text-[11px] font-mono">
+                      <div className="flex justify-between text-slate-400">
+                        <span>Active Sockets</span>
+                        <span className="text-slate-200">
+                          {activeConns} / {srv.maxConcurrent}
+                        </span>
                       </div>
 
-                      {/* CPU Utilization Bar */}
-                      <div style={{ marginBottom: "8px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "4px" }}>
-                          <span>CPU Load</span>
-                          <span style={{ color: isOffline ? "#ef4444" : cpuColor, fontWeight: 700 }}>
-                            {isOffline ? "OFFLINE" : `${cpu}%`}
-                          </span>
-                        </div>
+                      <div className="flex justify-between text-slate-400">
+                        <span>Queue Depth</span>
+                        <span className={queueDepth > 0 ? "text-amber-400 font-bold" : "text-slate-500"}>
+                          {queueDepth}
+                        </span>
+                      </div>
 
-                        <div style={{ width: "100%", height: "6px", backgroundColor: "rgba(255,255,255,0.06)", borderRadius: "999px", overflow: "hidden" }}>
+                      {/* CPU Bar */}
+                      <div>
+                        <div className="flex justify-between text-[10px] text-slate-500 mb-0.5">
+                          <span>CPU Load</span>
+                          <span>{cpuLoad.toFixed(0)}%</span>
+                        </div>
+                        <div className="h-1 bg-[#0d1117] rounded-full overflow-hidden border border-[#21262d]">
                           <div
-                            style={{
-                              width: isOffline ? "0%" : `${cpu}%`,
-                              height: "100%",
-                              backgroundColor: cpuColor,
-                              borderRadius: "999px",
-                              transition: "width 0.3s ease",
-                            }}
+                            className={`h-full transition-all duration-200 ${
+                              cpuLoad > 85
+                                ? "bg-rose-500"
+                                : cpuLoad > 60
+                                ? "bg-amber-500"
+                                : "bg-emerald-500"
+                            }`}
+                            style={{ width: `${Math.min(100, cpuLoad)}%` }}
                           />
                         </div>
                       </div>
-
-                      {/* Connections & Queues */}
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.74rem", color: "#94a3b8" }}>
-                        <span>
-                          Conns: <strong style={{ color: "#ffffff" }}>{activeConns}</strong>/{srv.maxConcurrent}
-                        </span>
-                        {queued > 0 ? (
-                          <span style={{ color: "#f59e0b", fontWeight: 700 }}>
-                            Queue: {queued}
-                          </span>
-                        ) : (
-                          <span>Base: {srv.baseLatencyMs}ms</span>
-                        )}
-                      </div>
                     </div>
-                  );
-                })}
-              </div>
+
+                    {/* Kill / Restore Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => onToggleServerFail(srv.id)}
+                      className={`w-full py-1 rounded text-[10px] font-mono uppercase font-semibold transition-colors mt-1 ${
+                        isOffline
+                          ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20"
+                          : "bg-rose-500/10 border border-rose-500/20 text-rose-300 hover:bg-rose-500/20"
+                      }`}
+                    >
+                      {isOffline ? "Restore Node" : "Simulate Failure"}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         );

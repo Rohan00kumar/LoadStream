@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import {
@@ -30,7 +30,7 @@ import EducationalDrawer from "./components/EducationalDrawer";
 const DEFAULT_SERVERS: VirtualServer[] = [
   {
     id: "srv-alpha",
-    name: "Node-Alpha (High-Compute)",
+    name: "Node-Alpha",
     region: "us-east-1",
     cpuCores: 8,
     memoryGb: 32,
@@ -41,7 +41,7 @@ const DEFAULT_SERVERS: VirtualServer[] = [
   },
   {
     id: "srv-beta",
-    name: "Node-Beta (Standard)",
+    name: "Node-Beta",
     region: "us-west-2",
     cpuCores: 4,
     memoryGb: 16,
@@ -52,7 +52,7 @@ const DEFAULT_SERVERS: VirtualServer[] = [
   },
   {
     id: "srv-gamma",
-    name: "Node-Gamma (Memory-Optimized)",
+    name: "Node-Gamma",
     region: "eu-central-1",
     cpuCores: 4,
     memoryGb: 32,
@@ -63,7 +63,7 @@ const DEFAULT_SERVERS: VirtualServer[] = [
   },
   {
     id: "srv-delta",
-    name: "Node-Delta (Edge-Fast)",
+    name: "Node-Delta",
     region: "ap-south-1",
     cpuCores: 2,
     memoryGb: 8,
@@ -86,8 +86,9 @@ const DEFAULT_WORKLOAD: WorkloadConfig = {
 
 const STORAGE_KEY = "orbit_arena_history";
 
+type ActiveTab = "simulation" | "results" | "logs" | "reference";
+
 export default function AlgorithmArenaPage() {
-  // Config state
   const [selectedAlgorithms, setSelectedAlgorithms] = useState<AlgorithmType[]>([
     "round_robin",
     "least_connections",
@@ -101,6 +102,9 @@ export default function AlgorithmArenaPage() {
     "srv-delta": 1,
   });
   const [workloadConfig, setWorkloadConfig] = useState<WorkloadConfig>(DEFAULT_WORKLOAD);
+
+  // Active view workspace tab
+  const [activeTab, setActiveTab] = useState<ActiveTab>("simulation");
 
   // Simulation execution state
   const [simState, setSimState] = useState<SimulationState>("idle");
@@ -127,10 +131,8 @@ export default function AlgorithmArenaPage() {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
 
-  // Engine ref
   const engineRef = useRef<SimulationEngine | null>(null);
 
-  // Keep server weights synchronized with servers
   const handleUpdateWeight = (serverId: string, weight: number) => {
     setServerWeights((prev) => ({ ...prev, [serverId]: weight }));
     setServers((prev) =>
@@ -148,27 +150,22 @@ export default function AlgorithmArenaPage() {
     try {
       const existing = localStorage.getItem(STORAGE_KEY);
       const parsed: SimulationRunHistory[] = existing ? JSON.parse(existing) : [];
-      const updated = [historyRecord, ...parsed.slice(0, 24)]; // Keep latest 25 runs
+      const updated = [historyRecord, ...parsed.slice(0, 24)];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     } catch (err) {
       console.error("Failed to save simulation history to localStorage:", err);
     }
   };
 
-  // Simulation control actions
   const handleStartSimulation = () => {
     if (selectedAlgorithms.length === 0 || servers.length === 0) return;
 
-    // Generate deterministic workload
     const requests = generateWorkload(workloadConfig);
-
-    // Prepare servers with active weights
     const configuredServers = servers.map((s) => ({
       ...s,
       weight: serverWeights[s.id] || s.weight || 1,
     }));
 
-    // Instantiate discrete-event engine
     const engine = new SimulationEngine(
       requests,
       selectedAlgorithms,
@@ -183,6 +180,7 @@ export default function AlgorithmArenaPage() {
     setVirtualTimeMs(0);
     setFinalResults(null);
     setEvents([]);
+    setActiveTab("simulation");
 
     engine.start(
       (tick: EngineTickState) => {
@@ -198,6 +196,7 @@ export default function AlgorithmArenaPage() {
         setFinalResults(history.results);
         setInsights(history.insights);
         saveRunToHistory(history);
+        setActiveTab("results");
       }
     );
   };
@@ -237,6 +236,7 @@ export default function AlgorithmArenaPage() {
     setEvents([]);
     setFinalResults(null);
     setInsights([]);
+    setActiveTab("simulation");
   };
 
   const handleSpeedChange = (newSpeed: SimulationSpeed) => {
@@ -246,7 +246,6 @@ export default function AlgorithmArenaPage() {
     }
   };
 
-  // Server crash/restore dynamic injection
   const handleToggleServerFail = (serverId: string) => {
     setServers((prev) =>
       prev.map((s) =>
@@ -265,7 +264,6 @@ export default function AlgorithmArenaPage() {
     }
   };
 
-  // Export handlers
   const handleExportJson = () => {
     if (!finalResults) return;
     const exportData = {
@@ -321,9 +319,8 @@ export default function AlgorithmArenaPage() {
       "data:text/csv;charset=utf-8," +
       [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
 
-    const encodedUri = encodeURI(csvContent);
     const downloadAnchor = document.createElement("a");
-    downloadAnchor.setAttribute("href", encodedUri);
+    downloadAnchor.setAttribute("href", encodeURI(csvContent));
     downloadAnchor.setAttribute("download", `arena-evaluation-${Date.now()}.csv`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
@@ -331,39 +328,55 @@ export default function AlgorithmArenaPage() {
   };
 
   return (
-    <div className="orbit-page">
+    <div className="orbit-page min-h-screen bg-[#090d13]">
       <Navbar />
 
-      <main className="orbit-main page-enter-anim" style={{ maxWidth: "1280px", margin: "0 auto", padding: "24px 20px 80px" }}>
-        {/* Navigation & Breadcrumb */}
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <Link href="/simulate" className="back-link flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
-            ← Back to Simulation Labs
-          </Link>
+      <main className="orbit-main page-enter-anim max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-20 space-y-5">
+        {/* Top Header Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#21262d] pb-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <Link
+                href="/simulate"
+                className="text-xs font-mono text-slate-500 hover:text-white transition-colors"
+              >
+                Simulation Labs
+              </Link>
+              <span className="text-slate-600 font-mono text-xs">/</span>
+              <span className="text-xs font-mono text-purple-400">Arena</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              Algorithm Arena
+            </h1>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Comparative discrete-event load balancing benchmarking suite.
+            </p>
+          </div>
 
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 rounded-full text-[11px] font-mono bg-purple-500/10 text-purple-300 border border-purple-500/20">
-              Interactive Educational Lab
+          {/* Telemetry Pills */}
+          <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
+            <span className="px-2.5 py-1 rounded-md bg-[#161b22] border border-[#21262d] text-slate-300">
+              {servers.length} Nodes Active
             </span>
-            <span className="px-2.5 py-1 rounded-full text-[11px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Discrete-Event Engine
+            <span className="px-2.5 py-1 rounded-md bg-[#161b22] border border-[#21262d] text-slate-300">
+              {workloadConfig.totalRequests} Reqs @ {workloadConfig.requestsPerSecond} RPS ({workloadConfig.pattern})
+            </span>
+            <span
+              className={`px-2.5 py-1 rounded-md uppercase font-bold ${
+                simState === "running"
+                  ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
+                  : simState === "completed"
+                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                  : "bg-[#161b22] border border-[#21262d] text-slate-400"
+              }`}
+            >
+              {simState}
             </span>
           </div>
         </div>
 
-        {/* Page Title & Intro */}
-        <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
-            <span className="text-purple-400">⚡</span> Algorithm Arena
-          </h1>
-          <p className="text-sm text-slate-400 mt-2 max-w-3xl leading-relaxed">
-            Experiment with, benchmark, and compare state-of-the-art load-balancing algorithms under identical synthetic workloads.
-            Observe real queue depths, server saturation, and latency distributions with live failure injection.
-          </p>
-        </div>
-
-        {/* SECTION 1: ALGORITHM SELECTOR */}
-        <section className="mb-8">
+        {/* Section 1: Algorithm Selector */}
+        <section>
           <AlgorithmSelector
             selectedAlgorithms={selectedAlgorithms}
             onToggleAlgorithm={handleToggleAlgorithm}
@@ -373,8 +386,8 @@ export default function AlgorithmArenaPage() {
           />
         </section>
 
-        {/* SECTION 2: WORKLOAD & SIMULATION CONTROLS */}
-        <section className="mb-8">
+        {/* Section 2: Controls Toolbar */}
+        <section>
           <ArenaControls
             state={simState}
             speed={simSpeed}
@@ -395,54 +408,114 @@ export default function AlgorithmArenaPage() {
           />
         </section>
 
-        {/* SECTION 3: LIVE VISUAL ARENA LANES */}
-        <section className="mb-8">
-          <VisualArenaLanes
-            selectedAlgorithms={selectedAlgorithms}
-            servers={servers}
-            laneMetrics={laneMetrics}
-            laneResults={laneResults}
-            onToggleServerFail={handleToggleServerFail}
-            isSimulating={simState === "running" || simState === "paused"}
-          />
-        </section>
+        {/* Section 3: Workspace View Switcher Tabs */}
+        <section className="space-y-4">
+          {/* Minimalist Tabs Navigation */}
+          <div className="flex items-center justify-between border-b border-[#21262d] pb-2 text-xs font-mono">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setActiveTab("simulation")}
+                className={`px-3 py-1.5 rounded-lg transition-colors ${
+                  activeTab === "simulation"
+                    ? "bg-[#161b22] border border-[#30363d] text-white font-semibold"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Simulation Topology
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("results")}
+                className={`px-3 py-1.5 rounded-lg transition-colors relative ${
+                  activeTab === "results"
+                    ? "bg-[#161b22] border border-[#30363d] text-white font-semibold"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Benchmark Matrix
+                {finalResults && (
+                  <span className="ml-1.5 text-[9px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Ready
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("logs")}
+                className={`px-3 py-1.5 rounded-lg transition-colors ${
+                  activeTab === "logs"
+                    ? "bg-[#161b22] border border-[#30363d] text-white font-semibold"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Event Log ({events.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsGuideModalOpen(true)}
+                className="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                Architecture Guide
+              </button>
+            </div>
 
-        {/* SECTION 4: REAL-TIME EVENT CONSOLE */}
-        <section className="mb-8">
-          <RealTimeEventConsole
-            events={events}
-            selectedAlgorithms={selectedAlgorithms}
-            onClearEvents={() => setEvents([])}
-          />
-        </section>
+            <div className="hidden sm:block text-[11px] text-slate-500">
+              {activeTab === "simulation" && "Live Socket & Queue Monitors"}
+              {activeTab === "results" && "Empirical Latency & Throughput"}
+              {activeTab === "logs" && "Real-Time Terminal Output"}
+            </div>
+          </div>
 
-        {/* SECTION 5: PERFORMANCE EVALUATION & BENCHMARK MATRIX */}
-        <section className="mb-8">
-          {finalResults ? (
-            <PerformanceEvaluation
-              results={finalResults}
-              selectedAlgorithms={selectedAlgorithms}
-              servers={servers}
-              insights={insights}
-              onOpenHistory={() => setIsHistoryModalOpen(true)}
-              onExportJson={handleExportJson}
-              onExportCsv={handleExportCsv}
-            />
-          ) : (
-            <div className="rounded-2xl border border-[#21262d] bg-[#0d1117]/60 p-8 text-center backdrop-blur-md">
-              <span className="text-3xl block mb-2">📊</span>
-              <h3 className="text-base font-semibold text-white mb-1">
-                Awaiting Simulation Execution
-              </h3>
-              <p className="text-xs text-slate-400 max-w-md mx-auto">
-                Press &quot;Start Simulation&quot; above to process requests across the selected algorithms. Full benchmark metrics, response time distributions, and comparative insights will appear here upon completion.
-              </p>
+          {/* TAB 1: SIMULATION LANES */}
+          {activeTab === "simulation" && (
+            <div>
+              <VisualArenaLanes
+                selectedAlgorithms={selectedAlgorithms}
+                servers={servers}
+                laneMetrics={laneMetrics}
+                laneResults={laneResults}
+                onToggleServerFail={handleToggleServerFail}
+                isSimulating={simState === "running" || simState === "paused"}
+              />
+            </div>
+          )}
+
+          {/* TAB 2: BENCHMARK RESULTS */}
+          {activeTab === "results" && (
+            <div>
+              {finalResults ? (
+                <PerformanceEvaluation
+                  results={finalResults}
+                  selectedAlgorithms={selectedAlgorithms}
+                  servers={servers}
+                  insights={insights}
+                  onOpenHistory={() => setIsHistoryModalOpen(true)}
+                  onExportJson={handleExportJson}
+                  onExportCsv={handleExportCsv}
+                />
+              ) : (
+                <div className="rounded-xl border border-[#21262d] bg-[#0d1117] p-8 text-center text-xs text-slate-500 font-mono">
+                  Benchmark matrix will populate upon completing or starting a simulation run.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: EVENT LOG */}
+          {activeTab === "logs" && (
+            <div>
+              <RealTimeEventConsole
+                events={events}
+                selectedAlgorithms={selectedAlgorithms}
+                onClearEvents={() => setEvents([])}
+              />
             </div>
           )}
         </section>
       </main>
 
-      {/* MODALS */}
+      {/* Configuration Modals */}
       <WorkloadConfigModal
         isOpen={isWorkloadModalOpen}
         onClose={() => setIsWorkloadModalOpen(false)}
@@ -459,7 +532,6 @@ export default function AlgorithmArenaPage() {
         servers={servers}
         onUpdateServers={(newServers) => {
           setServers(newServers);
-          // Set default weight for new servers if missing
           newServers.forEach((s) => {
             if (serverWeights[s.id] === undefined) {
               setServerWeights((prev) => ({ ...prev, [s.id]: s.weight || 2 }));
@@ -484,6 +556,7 @@ export default function AlgorithmArenaPage() {
           setFinalResults(run.results);
           setInsights(run.insights);
           setIsHistoryModalOpen(false);
+          setActiveTab("results");
         }}
       />
 

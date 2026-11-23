@@ -51,7 +51,7 @@ export default function ServerManagerModal({
     setFormCores(srv.cpuCores);
     setFormMemory(srv.memoryGb);
     setFormMaxConcurrent(srv.maxConcurrent);
-    setFormWeight(srv.weight);
+    setFormWeight(srv.weight || 2);
     setFormBaseLatency(srv.baseLatencyMs);
   };
 
@@ -59,14 +59,14 @@ export default function ServerManagerModal({
     e.preventDefault();
     if (isAdding) {
       const newSrv: VirtualServer = {
-        id: `srv-${Date.now().toString(36)}`,
+        id: `srv-${Date.now().toString().slice(-4)}`,
         name: formName || `Node-${servers.length + 1}`,
         region: formRegion,
-        cpuCores: Number(formCores) || 4,
-        memoryGb: Number(formMemory) || 8,
-        maxConcurrent: Number(formMaxConcurrent) || 20,
-        weight: Number(formWeight) || 1,
-        baseLatencyMs: Number(formBaseLatency) || 15,
+        cpuCores: formCores,
+        memoryGb: formMemory,
+        maxConcurrent: formMaxConcurrent,
+        weight: formWeight,
+        baseLatencyMs: formBaseLatency,
         status: "healthy",
       };
       onUpdateServers([...servers, newSrv]);
@@ -78,11 +78,11 @@ export default function ServerManagerModal({
               ...s,
               name: formName,
               region: formRegion,
-              cpuCores: Number(formCores),
-              memoryGb: Number(formMemory),
-              maxConcurrent: Number(formMaxConcurrent),
-              weight: Number(formWeight),
-              baseLatencyMs: Number(formBaseLatency),
+              cpuCores: formCores,
+              memoryGb: formMemory,
+              maxConcurrent: formMaxConcurrent,
+              weight: formWeight,
+              baseLatencyMs: formBaseLatency,
             }
           : s
       );
@@ -91,9 +91,9 @@ export default function ServerManagerModal({
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (servers.length <= 2) {
-      alert("A cluster must have at least 2 servers for load balancing.");
+  const handleDeleteServer = (id: string) => {
+    if (servers.length <= 1) {
+      alert("At least one server node must remain active.");
       return;
     }
     onUpdateServers(servers.filter((s) => s.id !== id));
@@ -101,116 +101,67 @@ export default function ServerManagerModal({
 
   return (
     <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.75)",
-        backdropFilter: "blur(6px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 100,
-        padding: "20px",
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        style={{
-          backgroundColor: "#111622",
-          border: "1px solid rgba(255, 255, 255, 0.14)",
-          borderRadius: "14px",
-          width: "100%",
-          maxWidth: "760px",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          padding: "26px",
-          boxShadow: "0 20px 50px rgba(0, 0, 0, 0.6)",
-        }}
+        className="w-full max-w-3xl max-h-[90vh] bg-[#0d1117] border border-[#21262d] rounded-xl p-5 overflow-y-auto space-y-4 shadow-2xl font-mono text-xs"
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-[#21262d] pb-3">
           <div>
-            <h3 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#ffffff" }}>Virtual Server Cluster Manager</h3>
-            <p style={{ fontSize: "0.85rem", color: "#94a3b8" }}>Add, configure, or calibrate virtual hardware capacity in the testbed.</p>
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
+              VIRTUAL CLUSTER TOPOLOGY
+            </h3>
+            <p className="text-[11px] text-slate-400 font-sans mt-0.5">
+              Add, tune capacity, and manage cluster nodes across compute regions.
+            </p>
           </div>
-          <button
-            onClick={onClose}
-            style={{ background: "none", border: "none", color: "#94a3b8", fontSize: "1.2rem", cursor: "pointer" }}
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleStartAdd}
+              className="px-2.5 py-1 rounded bg-purple-600 text-white hover:bg-purple-500 font-semibold transition-colors"
+            >
+              Add Node
+            </button>
+            <button
+              onClick={onClose}
+              className="px-2 py-1 text-slate-400 hover:text-white rounded bg-[#161b22]"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
-        {/* Action Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px" }}>
-          <button
-            onClick={handleStartAdd}
-            style={{
-              padding: "6px 14px",
-              backgroundColor: "rgba(52, 211, 153, 0.15)",
-              border: "1px solid rgba(52, 211, 153, 0.35)",
-              borderRadius: "6px",
-              color: "#34d399",
-              fontSize: "0.82rem",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            + Add New Virtual Server
-          </button>
-
-          <button
-            onClick={onResetDefaults}
-            style={{
-              padding: "6px 14px",
-              backgroundColor: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "6px",
-              color: "#94a3b8",
-              fontSize: "0.82rem",
-              cursor: "pointer",
-            }}
-          >
-            ↺ Restore Defaults
-          </button>
-        </div>
-
-        {/* Server Edit / Add Form */}
+        {/* Add/Edit Form */}
         {(isAdding || editingServer) && (
           <form
             onSubmit={handleSaveForm}
-            style={{
-              backgroundColor: "rgba(0, 0, 0, 0.35)",
-              border: "1px solid rgba(167, 139, 250, 0.3)",
-              borderRadius: "10px",
-              padding: "16px",
-              marginBottom: "20px",
-            }}
+            className="p-3.5 rounded-lg border border-purple-500/40 bg-purple-500/5 space-y-3"
           >
-            <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#a78bfa", marginBottom: "12px" }}>
-              {isAdding ? "Create New Virtual Server" : `Edit ${editingServer?.name}`}
-            </h4>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "10px", marginBottom: "14px" }}>
+            <div className="text-xs font-bold text-purple-300 font-sans">
+              {isAdding ? "Add New Server Node" : `Edit Node: ${editingServer?.name}`}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               <div>
-                <label style={{ fontSize: "0.75rem", color: "#94a3b8", display: "block" }}>Name</label>
+                <label className="text-[10px] text-slate-400 block mb-0.5">Node Name</label>
                 <input
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  style={{ width: "100%", background: "#0a0e17", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "6px 8px", color: "#ffffff", fontSize: "0.82rem" }}
+                  className="w-full bg-[#161b22] border border-[#30363d] rounded px-2 py-1 text-white focus:outline-none focus:border-purple-500"
                   required
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: "0.75rem", color: "#94a3b8", display: "block" }}>Region</label>
+                <label className="text-[10px] text-slate-400 block mb-0.5">Region</label>
                 <select
                   value={formRegion}
                   onChange={(e) => setFormRegion(e.target.value)}
-                  style={{ width: "100%", background: "#0a0e17", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "6px 8px", color: "#ffffff", fontSize: "0.82rem" }}
+                  className="w-full bg-[#161b22] border border-[#30363d] rounded px-2 py-1 text-white focus:outline-none focus:border-purple-500"
                 >
                   <option value="us-east-1">us-east-1</option>
                   <option value="us-west-2">us-west-2</option>
@@ -220,133 +171,138 @@ export default function ServerManagerModal({
               </div>
 
               <div>
-                <label style={{ fontSize: "0.75rem", color: "#94a3b8", display: "block" }}>vCPU Cores</label>
+                <label className="text-[10px] text-slate-400 block mb-0.5">CPU Cores</label>
                 <input
                   type="number"
-                  min="1"
-                  max="32"
+                  min={1}
+                  max={64}
                   value={formCores}
-                  onChange={(e) => setFormCores(parseInt(e.target.value) || 4)}
-                  style={{ width: "100%", background: "#0a0e17", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "6px 8px", color: "#ffffff", fontSize: "0.82rem" }}
+                  onChange={(e) => setFormCores(parseInt(e.target.value) || 2)}
+                  className="w-full bg-[#161b22] border border-[#30363d] rounded px-2 py-1 text-white focus:outline-none focus:border-purple-500"
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: "0.75rem", color: "#94a3b8", display: "block" }}>Memory (GB)</label>
+                <label className="text-[10px] text-slate-400 block mb-0.5">Memory (GB)</label>
                 <input
                   type="number"
-                  min="2"
-                  max="128"
+                  min={2}
+                  max={256}
                   value={formMemory}
                   onChange={(e) => setFormMemory(parseInt(e.target.value) || 8)}
-                  style={{ width: "100%", background: "#0a0e17", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "6px 8px", color: "#ffffff", fontSize: "0.82rem" }}
+                  className="w-full bg-[#161b22] border border-[#30363d] rounded px-2 py-1 text-white focus:outline-none focus:border-purple-500"
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: "0.75rem", color: "#94a3b8", display: "block" }}>Max Concurrency</label>
+                <label className="text-[10px] text-slate-400 block mb-0.5">Max Concurrent</label>
                 <input
                   type="number"
-                  min="5"
-                  max="100"
+                  min={5}
+                  max={200}
                   value={formMaxConcurrent}
                   onChange={(e) => setFormMaxConcurrent(parseInt(e.target.value) || 20)}
-                  style={{ width: "100%", background: "#0a0e17", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "6px 8px", color: "#ffffff", fontSize: "0.82rem" }}
+                  className="w-full bg-[#161b22] border border-[#30363d] rounded px-2 py-1 text-white focus:outline-none focus:border-purple-500"
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: "0.75rem", color: "#94a3b8", display: "block" }}>Weight (WRR)</label>
+                <label className="text-[10px] text-slate-400 block mb-0.5">WRR Weight</label>
                 <input
                   type="number"
-                  min="1"
-                  max="10"
+                  min={1}
+                  max={10}
                   value={formWeight}
                   onChange={(e) => setFormWeight(parseInt(e.target.value) || 1)}
-                  style={{ width: "100%", background: "#0a0e17", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "6px 8px", color: "#ffffff", fontSize: "0.82rem" }}
+                  className="w-full bg-[#161b22] border border-[#30363d] rounded px-2 py-1 text-white focus:outline-none focus:border-purple-500"
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: "0.75rem", color: "#94a3b8", display: "block" }}>Base Latency (ms)</label>
+                <label className="text-[10px] text-slate-400 block mb-0.5">Base Ping (ms)</label>
                 <input
                   type="number"
-                  min="2"
-                  max="100"
+                  min={2}
+                  max={150}
                   value={formBaseLatency}
-                  onChange={(e) => setFormBaseLatency(parseInt(e.target.value) || 15)}
-                  style={{ width: "100%", background: "#0a0e17", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "6px 8px", color: "#ffffff", fontSize: "0.82rem" }}
+                  onChange={(e) => setFormBaseLatency(parseInt(e.target.value) || 10)}
+                  className="w-full bg-[#161b22] border border-[#30363d] rounded px-2 py-1 text-white focus:outline-none focus:border-purple-500"
                 />
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+            <div className="flex justify-end gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => {
                   setIsAdding(false);
                   setEditingServer(null);
                 }}
-                style={{ padding: "6px 12px", background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#94a3b8", fontSize: "0.82rem", cursor: "pointer" }}
+                className="px-2.5 py-1 text-slate-400 hover:text-white rounded bg-[#161b22]"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                style={{ padding: "6px 16px", backgroundColor: "#a855f7", border: "none", borderRadius: "6px", color: "#ffffff", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}
+                className="px-3 py-1 rounded bg-purple-600 hover:bg-purple-500 text-white font-semibold"
               >
-                Save Server
+                Save Node
               </button>
             </div>
           </form>
         )}
 
         {/* Existing Servers List */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div className="space-y-2">
           {servers.map((srv) => (
             <div
               key={srv.id}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                backgroundColor: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "8px",
-                padding: "12px 16px",
-                flexWrap: "wrap",
-                gap: "10px",
-              }}
+              className="p-3 rounded-lg border border-[#21262d] bg-[#161b22] flex flex-wrap items-center justify-between gap-2.5"
             >
               <div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <strong style={{ fontSize: "0.92rem", color: "#ffffff" }}>{srv.name}</strong>
-                  <span style={{ fontSize: "0.72rem", color: "#94a3b8", fontFamily: "monospace" }}>[{srv.region}]</span>
-                  <span style={{ fontSize: "0.7rem", color: srv.status === "offline" ? "#fca5a5" : "#34d399", backgroundColor: srv.status === "offline" ? "#7f1d1d" : "#064e3b", padding: "1px 6px", borderRadius: "4px" }}>
-                    {srv.status}
-                  </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-white font-sans">{srv.name}</span>
+                  <span className="text-[10px] text-slate-500">[{srv.region}]</span>
                 </div>
-                <div style={{ fontSize: "0.78rem", color: "#94a3b8", marginTop: "4px" }}>
-                  {srv.cpuCores} vCPU • {srv.memoryGb}GB RAM • Max Conns: {srv.maxConcurrent} • Weight: {srv.weight}x • Base Ping: {srv.baseLatencyMs}ms
+                <div className="text-[11px] text-slate-400 mt-0.5">
+                  {srv.cpuCores} cores | {srv.memoryGb}GB RAM | {srv.maxConcurrent} max conns | Weight: {srv.weight || 1} | Latency: {srv.baseLatencyMs}ms
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: "8px" }}>
+              <div className="flex items-center gap-1.5 text-[11px]">
                 <button
+                  type="button"
                   onClick={() => handleStartEdit(srv)}
-                  style={{ padding: "4px 10px", backgroundColor: "rgba(255,255,255,0.08)", border: "none", borderRadius: "4px", color: "#cbd5e1", fontSize: "0.78rem", cursor: "pointer" }}
+                  className="px-2 py-1 rounded bg-[#21262d] text-slate-300 hover:text-white"
                 >
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDelete(srv.id)}
-                  style={{ padding: "4px 10px", backgroundColor: "rgba(239, 68, 68, 0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "4px", color: "#fca5a5", fontSize: "0.78rem", cursor: "pointer" }}
+                  type="button"
+                  onClick={() => handleDeleteServer(srv.id)}
+                  className="px-2 py-1 rounded bg-rose-500/10 text-rose-300 hover:bg-rose-500/20"
                 >
                   Delete
                 </button>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-[#21262d] pt-3 flex items-center justify-between">
+          <button
+            onClick={onResetDefaults}
+            className="text-[11px] text-slate-400 hover:text-white"
+          >
+            Reset Default Cluster
+          </button>
+          <button
+            onClick={onClose}
+            className="px-3.5 py-1.5 rounded-lg bg-[#21262d] hover:bg-[#30363d] text-white"
+          >
+            Done
+          </button>
         </div>
       </div>
     </div>

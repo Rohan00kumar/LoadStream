@@ -17,31 +17,29 @@ export const ALGORITHM_METADATA: Record<AlgorithmType, AlgorithmInfo> = {
     id: "round_robin",
     name: "Round Robin",
     shortName: "RR",
-    color: "#94a3b8",
-    tagline: "Sequential Cyclical Routing",
-    explanation:
-      "Routes each incoming request to the next server in cyclical sequence (1 → 2 → 3 → 4 → 1).",
-    routingStrategy: "Deterministic index increment across healthy nodes.",
-    pros: ["Zero memory overhead", "Fair distribution for uniform jobs", "Stateless & fast"],
-    cons: ["Blind to server load differences", "Causes hot-spots if job execution time varies"],
-    bestFor: "Uniform, homogeneous servers with short identical requests.",
+    color: "#38bdf8",
+    tagline: "Sequential Cyclical",
+    explanation: "Routes each incoming request to the next server in sequence.",
+    routingStrategy: "Deterministic modular index increment across healthy nodes.",
+    pros: ["Zero memory overhead", "Fair for uniform jobs", "Stateless"],
+    cons: ["Blind to server load", "Hotspots on uneven durations"],
+    bestFor: "Uniform servers with short identical requests.",
     status: "available",
-    statusBadge: "Built-in Heuristic",
+    statusBadge: "Heuristic",
   },
   random: {
     id: "random",
     name: "Random Selection",
     shortName: "RND",
-    color: "#60a5fa",
-    tagline: "Uniform Pseudo-Random Distribution",
-    explanation:
-      "Selects an operational server uniformly at random from the active cluster pool.",
+    color: "#94a3b8",
+    tagline: "Uniform Stochastic",
+    explanation: "Selects an operational server uniformly at random.",
     routingStrategy: "Pseudo-random uniform draw across available healthy nodes.",
-    pros: ["Zero shared state synchronization", "Highly scalable in distributed mesh", "Extremely fast"],
-    cons: ["Statistical clustering creates transient hot-spots", "No load or capacity awareness"],
-    bestFor: "Massive scale microservices with distributed stateless proxies.",
+    pros: ["Stateless", "Scalable in distributed mesh", "Low coordination"],
+    cons: ["Statistical clustering creates transient hotspots"],
+    bestFor: "High-volume distributed stateless microservices.",
     status: "available",
-    statusBadge: "Built-in Heuristic",
+    statusBadge: "Heuristic",
   },
   least_connections: {
     id: "least_connections",
@@ -49,45 +47,41 @@ export const ALGORITHM_METADATA: Record<AlgorithmType, AlgorithmInfo> = {
     shortName: "LC",
     color: "#34d399",
     tagline: "Active Socket Minimization",
-    explanation:
-      "Directs traffic to the server with the lowest number of active concurrent TCP connections.",
+    explanation: "Directs traffic to the server with lowest active concurrent sockets.",
     routingStrategy: "Selects argmin(activeRequests) among healthy servers.",
-    pros: ["Adapts to varying request durations", "Drains overloaded servers naturally", "Low tail latency"],
-    cons: ["Requires real-time connection tracking", "Can overload slow servers with low socket counts"],
-    bestFor: "Mixed workloads with long-lived transactions (e.g. streaming, heavy queries).",
+    pros: ["Adapts to varying request durations", "Low tail latency", "Drains loaded nodes"],
+    cons: ["Requires real-time connection tracking across threads"],
+    bestFor: "Workloads with variable duration or streaming connections.",
     status: "available",
-    statusBadge: "Built-in Dynamic",
+    statusBadge: "Dynamic",
   },
   weighted_round_robin: {
     id: "weighted_round_robin",
     name: "Weighted Round Robin",
     shortName: "WRR",
     color: "#fbbf24",
-    tagline: "Capacity-Proportional Distribution",
-    explanation:
-      "Dispatches requests cyclically according to assigned hardware weights (e.g. 3x to 8-core, 1x to 2-core).",
+    tagline: "Capacity Proportional",
+    explanation: "Dispatches requests cyclically according to assigned hardware weights.",
     routingStrategy: "Smooth interleaved deficit round-robin based on relative server capacity weights.",
-    pros: ["Supports heterogeneous hardware", "Prevents weak nodes from taking heavy shares", "Deterministic"],
-    cons: ["Static weights cannot predict dynamic traffic bursts or background node lag"],
-    bestFor: "Multi-tier clusters with mixed hardware capabilities (e.g. Edge vs Core servers).",
+    pros: ["Handles mixed hardware capacities", "Deterministic share allocation"],
+    cons: ["Static weights fail to adapt to unexpected node lag"],
+    bestFor: "Heterogeneous clusters with mixed compute tiers.",
     status: "available",
-    statusBadge: "Configurable Weights",
+    statusBadge: "Weighted",
   },
   ppo: {
     id: "ppo",
-    name: "PPO Neural Policy",
+    name: "PPO Policy",
     shortName: "PPO",
     color: "#a78bfa",
-    tagline: "Proximal Policy Optimization (RL)",
-    explanation:
-      "A deep reinforcement learning actor-critic policy that predicts multi-objective SLA trade-offs (CPU, memory, queues).",
-    routingStrategy:
-      "Maximizes expected cumulative reward minimizing tail latency and SLA timeout penalties.",
-    pros: ["Self-learning & adaptive", "Anticipates bottleneck surges", "Optimizes multi-resource trade-offs"],
-    cons: ["Inference overhead (~0.8ms)", "Requires training data & reward calibration"],
-    bestFor: "High-concurrency cloud environments with volatile traffic bursts and tight SLA constraints.",
+    tagline: "Neural Reinforcement Learning",
+    explanation: "Actor-critic policy optimizing latency, queue backpressure, and SLA margins.",
+    routingStrategy: "Infers optimal node probability distribution from server state telemetry.",
+    pros: ["Adaptive to traffic surges", "Multi-objective optimization"],
+    cons: ["Inference latency overhead (~0.8ms)"],
+    bestFor: "High-concurrency cloud environments with volatile traffic bursts.",
     status: "simulated_model",
-    statusBadge: "Simulated Neural Policy (Offline Checkpoint)",
+    statusBadge: "Simulated Model",
   },
 };
 
@@ -98,203 +92,86 @@ export default function AlgorithmSelector({
   onUpdateWeight,
   serverIds,
 }: Props) {
-  const [ppoBadge, setPpoBadge] = useState<string>(ALGORITHM_METADATA.ppo.statusBadge);
-  const [expandedAlgo, setExpandedAlgo] = useState<AlgorithmType | null>(null);
+  const [ppoBadge, setPpoBadge] = useState<string>("Simulated Model");
 
   useEffect(() => {
     PPOPolicyBalancer.checkBackendAvailability().then((res) => {
-      setPpoBadge(res.label);
+      setPpoBadge(res.isBackendLive ? "Backend Connected" : "Simulated Model");
     });
   }, []);
 
-  return (
-    <div
-      style={{
-        backgroundColor: "rgba(18, 22, 31, 0.75)",
-        border: "1px solid rgba(255, 255, 255, 0.08)",
-        borderRadius: "14px",
-        padding: "22px 24px",
-        marginBottom: "24px",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
-        <div>
-          <h2 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#ffffff", letterSpacing: "-0.01em" }}>
-            Select Competing Algorithms
-          </h2>
-          <p style={{ fontSize: "0.85rem", color: "#94a3b8" }}>
-            Choose one or multiple algorithms to run simultaneously under identical workload conditions.
-          </p>
-        </div>
-        <div style={{ fontSize: "0.8rem", color: "#a78bfa", backgroundColor: "rgba(167, 139, 250, 0.1)", border: "1px solid rgba(167, 139, 250, 0.25)", padding: "4px 12px", borderRadius: "8px" }}>
-          {selectedAlgorithms.length} selected for comparison
-        </div>
-      </div>
+  const hasWeighted = selectedAlgorithms.includes("weighted_round_robin");
 
-      {/* Grid of algorithm cards */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: "14px",
-        }}
-      >
+  return (
+    <div className="space-y-3">
+      {/* Selector Chips Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
         {(Object.keys(ALGORITHM_METADATA) as AlgorithmType[]).map((key) => {
           const meta = ALGORITHM_METADATA[key];
           const isSelected = selectedAlgorithms.includes(key);
           const badgeText = key === "ppo" ? ppoBadge : meta.statusBadge;
 
           return (
-            <div
+            <button
               key={key}
-              style={{
-                position: "relative",
-                backgroundColor: isSelected ? "rgba(255, 255, 255, 0.06)" : "rgba(13, 17, 23, 0.6)",
-                border: isSelected ? `1.5px solid ${meta.color}` : "1px solid rgba(255, 255, 255, 0.07)",
-                borderRadius: "12px",
-                padding: "16px",
-                cursor: "pointer",
-                transition: "all 0.22s ease",
-                boxShadow: isSelected ? `0 0 16px ${meta.color}22` : "none",
-              }}
+              type="button"
               onClick={() => onToggleAlgorithm(key)}
+              className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between ${
+                isSelected
+                  ? "bg-[#161b22] border-purple-500/60 shadow-sm shadow-purple-500/10"
+                  : "bg-[#0d1117] border-[#21262d] hover:border-slate-700 opacity-60 hover:opacity-100"
+              }`}
             >
-              {/* Top row: Checkbox & Short Tag */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => {}} // handled by parent onClick
-                    style={{ accentColor: meta.color, width: "16px", height: "16px", cursor: "pointer" }}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-mono text-[10px] font-semibold text-slate-400 uppercase">
+                    {meta.shortName}
+                  </span>
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      isSelected ? "bg-purple-400" : "bg-slate-600"
+                    }`}
                   />
-                  <strong style={{ fontSize: "0.98rem", color: "#ffffff" }}>{meta.name}</strong>
                 </div>
-                <span
-                  style={{
-                    fontSize: "0.7rem",
-                    fontFamily: "monospace",
-                    fontWeight: 700,
-                    padding: "2px 6px",
-                    borderRadius: "4px",
-                    backgroundColor: `${meta.color}20`,
-                    color: meta.color,
-                  }}
-                >
-                  {meta.shortName}
-                </span>
+                <div className="text-xs font-semibold text-white truncate">
+                  {meta.name}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-0.5 font-mono">
+                  {meta.tagline}
+                </div>
               </div>
 
-              {/* Tagline */}
-              <div style={{ fontSize: "0.78rem", color: meta.color, fontWeight: 600, marginBottom: "8px" }}>
-                {meta.tagline}
-              </div>
-
-              {/* Explanation */}
-              <p style={{ fontSize: "0.82rem", color: "#94a3b8", lineHeight: 1.45, marginBottom: "12px" }}>
-                {meta.explanation}
-              </p>
-
-              {/* Status Badge */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span
-                  style={{
-                    fontSize: "0.7rem",
-                    color: key === "ppo" && ppoBadge.includes("Simulated") ? "#fbbf24" : "#cbd5e1",
-                    backgroundColor: "rgba(255, 255, 255, 0.04)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                    padding: "2px 6px",
-                    borderRadius: "4px",
-                  }}
-                >
+              <div className="mt-2.5 pt-2 border-t border-[#21262d] flex items-center justify-between">
+                <span className="text-[9px] font-mono text-slate-400 px-1.5 py-0.5 rounded bg-[#21262d]">
                   {badgeText}
                 </span>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setExpandedAlgo(expandedAlgo === key ? null : key);
-                  }}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#818cf8",
-                    fontSize: "0.75rem",
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                  }}
-                >
-                  {expandedAlgo === key ? "Less info" : "Details"}
-                </button>
+                <span className="text-[10px] font-mono font-medium text-slate-400">
+                  {isSelected ? "Active" : "Off"}
+                </span>
               </div>
-
-              {/* Details Drawer if expanded */}
-              {expandedAlgo === key && (
-                <div
-                  style={{
-                    marginTop: "12px",
-                    paddingTop: "10px",
-                    borderTop: "1px dashed rgba(255, 255, 255, 0.1)",
-                    fontSize: "0.78rem",
-                    color: "#cbd5e1",
-                    lineHeight: 1.5,
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div style={{ marginBottom: "6px" }}>
-                    <strong style={{ color: meta.color }}>Routing Strategy:</strong> {meta.routingStrategy}
-                  </div>
-                  <div style={{ marginBottom: "6px" }}>
-                    <strong style={{ color: "#34d399" }}>Pros:</strong> {meta.pros.join(", ")}
-                  </div>
-                  <div style={{ marginBottom: "6px" }}>
-                    <strong style={{ color: "#f87171" }}>Cons:</strong> {meta.cons.join(", ")}
-                  </div>
-                  <div>
-                    <strong style={{ color: "#fbbf24" }}>Best for:</strong> {meta.bestFor}
-                  </div>
-                </div>
-              )}
-            </div>
+            </button>
           );
         })}
       </div>
 
-      {/* Weighted Round Robin Specific Config (if selected) */}
-      {selectedAlgorithms.includes("weighted_round_robin") && (
-        <div
-          style={{
-            marginTop: "16px",
-            padding: "12px 16px",
-            backgroundColor: "rgba(251, 191, 36, 0.07)",
-            border: "1px solid rgba(251, 191, 36, 0.25)",
-            borderRadius: "8px",
-          }}
-        >
-          <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#fbbf24", marginBottom: "8px" }}>
-            Weighted Round Robin — Server Capacity Weights:
+      {/* Inline Weights Editor if Weighted Round Robin is active */}
+      {hasWeighted && (
+        <div className="p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="text-slate-300 font-mono text-[11px]">
+            <span className="font-semibold text-amber-400">WRR Node Weights:</span> Allocate relative traffic proportion per node
           </div>
-          <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center" }}>
-            {serverIds.map((srvId) => (
-              <div key={srvId} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", color: "#cbd5e1" }}>
-                <span>{srvId}:</span>
+          <div className="flex flex-wrap items-center gap-2">
+            {serverIds.map((id) => (
+              <div key={id} className="flex items-center gap-1.5 bg-[#0d1117] border border-[#21262d] px-2 py-1 rounded-lg">
+                <span className="text-[10px] font-mono text-slate-400 uppercase">{id.replace("srv-", "")}</span>
                 <input
                   type="number"
-                  min="1"
-                  max="10"
-                  value={serverWeights[srvId] || 1}
-                  onChange={(e) => onUpdateWeight(srvId, parseInt(e.target.value) || 1)}
-                  style={{
-                    width: "48px",
-                    background: "rgba(0,0,0,0.5)",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    borderRadius: "4px",
-                    color: "#ffffff",
-                    padding: "2px 6px",
-                    fontSize: "0.8rem",
-                  }}
+                  min={1}
+                  max={10}
+                  value={serverWeights[id] ?? 1}
+                  onChange={(e) => onUpdateWeight(id, Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-10 bg-[#161b22] border border-[#30363d] rounded text-center text-xs text-amber-300 font-mono focus:outline-none focus:border-amber-500"
                 />
-                <span style={{ color: "#94a3b8" }}>x</span>
               </div>
             ))}
           </div>
