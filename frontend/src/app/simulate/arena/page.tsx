@@ -1,287 +1,497 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import {
+  AlgorithmType,
+  VirtualServer,
+  WorkloadConfig,
+  SimulationSpeed,
+  SimulationState,
+  SimulationEvent,
+  ServerLiveMetrics,
+  RequestResult,
+  AlgorithmPerformance,
+  SimulationRunHistory,
+} from "./types";
+import { generateWorkload } from "./engine/workloadGenerator";
+import { SimulationEngine, EngineTickState } from "./engine/simulationEngine";
+import AlgorithmSelector from "./components/AlgorithmSelector";
+import ArenaControls from "./components/ArenaControls";
+import VisualArenaLanes from "./components/VisualArenaLanes";
+import RealTimeEventConsole from "./components/RealTimeEventConsole";
+import PerformanceEvaluation from "./components/PerformanceEvaluation";
+import WorkloadConfigModal from "./components/WorkloadConfigModal";
+import ServerManagerModal from "./components/ServerManagerModal";
+import HistoryModal from "./components/HistoryModal";
+import EducationalDrawer from "./components/EducationalDrawer";
 
-interface ServerNode {
-  id: string;
-  name: string;
-  region: string;
-  load: number;
-  connections: number;
-  latency: number;
-}
+const DEFAULT_SERVERS: VirtualServer[] = [
+  {
+    id: "srv-alpha",
+    name: "Node-Alpha (High-Compute)",
+    region: "us-east-1",
+    cpuCores: 8,
+    memoryGb: 32,
+    maxConcurrent: 60,
+    weight: 4,
+    baseLatencyMs: 12,
+    status: "healthy",
+  },
+  {
+    id: "srv-beta",
+    name: "Node-Beta (Standard)",
+    region: "us-west-2",
+    cpuCores: 4,
+    memoryGb: 16,
+    maxConcurrent: 35,
+    weight: 2,
+    baseLatencyMs: 18,
+    status: "healthy",
+  },
+  {
+    id: "srv-gamma",
+    name: "Node-Gamma (Memory-Optimized)",
+    region: "eu-central-1",
+    cpuCores: 4,
+    memoryGb: 32,
+    maxConcurrent: 30,
+    weight: 2,
+    baseLatencyMs: 22,
+    status: "healthy",
+  },
+  {
+    id: "srv-delta",
+    name: "Node-Delta (Edge-Fast)",
+    region: "ap-south-1",
+    cpuCores: 2,
+    memoryGb: 8,
+    maxConcurrent: 15,
+    weight: 1,
+    baseLatencyMs: 8,
+    status: "healthy",
+  },
+];
+
+const DEFAULT_WORKLOAD: WorkloadConfig = {
+  totalRequests: 160,
+  requestsPerSecond: 25,
+  concurrentUsers: 10,
+  pattern: "constant",
+  complexity: "mixed",
+  seed: 42,
+  timeoutMs: 1200,
+};
+
+const STORAGE_KEY = "orbit_arena_history";
 
 export default function AlgorithmArenaPage() {
-  const [algorithm, setAlgorithm] = useState<"ppo" | "least_conn" | "round_robin">("ppo");
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [requestCount, setRequestCount] = useState(1280);
-  const [nodes, setNodes] = useState<ServerNode[]>([
-    { id: "srv-1", name: "Node-Alpha (High-Compute)", region: "us-east-1", load: 42, connections: 28, latency: 12 },
-    { id: "srv-2", name: "Node-Beta (Standard)", region: "us-west-2", load: 38, connections: 25, latency: 15 },
-    { id: "srv-3", name: "Node-Gamma (Memory-Optimized)", region: "eu-central-1", load: 45, connections: 30, latency: 19 },
-    { id: "srv-4", name: "Node-Delta (Edge Fast)", region: "ap-south-1", load: 35, connections: 22, latency: 9 },
+  // Config state
+  const [selectedAlgorithms, setSelectedAlgorithms] = useState<AlgorithmType[]>([
+    "round_robin",
+    "least_connections",
+    "ppo",
   ]);
+  const [servers, setServers] = useState<VirtualServer[]>(DEFAULT_SERVERS);
+  const [serverWeights, setServerWeights] = useState<Record<string, number>>({
+    "srv-alpha": 4,
+    "srv-beta": 2,
+    "srv-gamma": 2,
+    "srv-delta": 1,
+  });
+  const [workloadConfig, setWorkloadConfig] = useState<WorkloadConfig>(DEFAULT_WORKLOAD);
 
-  useEffect(() => {
-    if (!isStreaming) return;
-    const interval = setInterval(() => {
-      setRequestCount((prev) => prev + 24);
-      setNodes((prev) =>
-        prev.map((node) => {
-          let delta = 0;
-          if (algorithm === "ppo") {
-            delta = Math.floor(Math.random() * 5) - 2;
-          } else if (algorithm === "least_conn") {
-            delta = Math.floor(Math.random() * 9) - 4;
-          } else {
-            delta = Math.floor(Math.random() * 16) - 7;
-          }
-          const nextLoad = Math.max(18, Math.min(94, node.load + delta));
-          return {
-            ...node,
-            load: nextLoad,
-            connections: Math.round(nextLoad * 0.72),
-            latency: Math.round(8 + (nextLoad / 100) * 16),
-          };
-        })
-      );
-    }, 500);
-    return () => clearInterval(interval);
-  }, [isStreaming, algorithm]);
+  // Simulation execution state
+  const [simState, setSimState] = useState<SimulationState>("idle");
+  const [simSpeed, setSimSpeed] = useState<SimulationSpeed>(1);
+  const [progressPercent, setProgressPercent] = useState<number>(0);
+  const [virtualTimeMs, setVirtualTimeMs] = useState<number>(0);
+
+  // Live telemetry
+  const [laneMetrics, setLaneMetrics] = useState<
+    Record<AlgorithmType, Record<string, ServerLiveMetrics>>
+  >({} as any);
+  const [laneResults, setLaneResults] = useState<Record<AlgorithmType, RequestResult[]>>({} as any);
+  const [events, setEvents] = useState<SimulationEvent[]>([]);
+
+  // Post-simulation results & insights
+  const [finalResults, setFinalResults] = useState<Record<AlgorithmType, AlgorithmPerformance> | null>(
+    null
+  );
+  const [insights, setInsights] = useState<string[]>([]);
+
+  // Modals state
+  const [isWorkloadModalOpen, setIsWorkloadModalOpen] = useState(false);
+  const [isServerModalOpen, setIsServerModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
+
+  // Engine ref
+  const engineRef = useRef<SimulationEngine | null>(null);
+
+  // Keep server weights synchronized with servers
+  const handleUpdateWeight = (serverId: string, weight: number) => {
+    setServerWeights((prev) => ({ ...prev, [serverId]: weight }));
+    setServers((prev) =>
+      prev.map((s) => (s.id === serverId ? { ...s, weight } : s))
+    );
+  };
+
+  const handleToggleAlgorithm = (algo: AlgorithmType) => {
+    setSelectedAlgorithms((prev) =>
+      prev.includes(algo) ? prev.filter((a) => a !== algo) : [...prev, algo]
+    );
+  };
+
+  const saveRunToHistory = (historyRecord: SimulationRunHistory) => {
+    try {
+      const existing = localStorage.getItem(STORAGE_KEY);
+      const parsed: SimulationRunHistory[] = existing ? JSON.parse(existing) : [];
+      const updated = [historyRecord, ...parsed.slice(0, 24)]; // Keep latest 25 runs
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (err) {
+      console.error("Failed to save simulation history to localStorage:", err);
+    }
+  };
+
+  // Simulation control actions
+  const handleStartSimulation = () => {
+    if (selectedAlgorithms.length === 0 || servers.length === 0) return;
+
+    // Generate deterministic workload
+    const requests = generateWorkload(workloadConfig);
+
+    // Prepare servers with active weights
+    const configuredServers = servers.map((s) => ({
+      ...s,
+      weight: serverWeights[s.id] || s.weight || 1,
+    }));
+
+    // Instantiate discrete-event engine
+    const engine = new SimulationEngine(
+      requests,
+      selectedAlgorithms,
+      configuredServers,
+      workloadConfig,
+      simSpeed
+    );
+    engineRef.current = engine;
+
+    setSimState("running");
+    setProgressPercent(0);
+    setVirtualTimeMs(0);
+    setFinalResults(null);
+    setEvents([]);
+
+    engine.start(
+      (tick: EngineTickState) => {
+        setVirtualTimeMs(tick.virtualTimeMs);
+        setProgressPercent(tick.progressPercent);
+        setLaneMetrics(tick.activeLaneMetrics);
+        setLaneResults(tick.activeLaneResults);
+        setEvents(tick.events);
+      },
+      (history: SimulationRunHistory) => {
+        setSimState("completed");
+        setProgressPercent(100);
+        setFinalResults(history.results);
+        setInsights(history.insights);
+        saveRunToHistory(history);
+      }
+    );
+  };
+
+  const handlePauseSimulation = () => {
+    if (engineRef.current) {
+      engineRef.current.pause();
+      setSimState("paused");
+    }
+  };
+
+  const handleResumeSimulation = () => {
+    if (engineRef.current) {
+      engineRef.current.resume();
+      setSimState("running");
+    }
+  };
+
+  const handleStopSimulation = () => {
+    if (engineRef.current) {
+      engineRef.current.stop();
+      setSimState("stopped");
+    }
+  };
+
+  const handleResetSimulation = () => {
+    if (engineRef.current) {
+      engineRef.current.stop();
+      engineRef.current.reset();
+      engineRef.current = null;
+    }
+    setSimState("idle");
+    setProgressPercent(0);
+    setVirtualTimeMs(0);
+    setLaneMetrics({} as any);
+    setLaneResults({} as any);
+    setEvents([]);
+    setFinalResults(null);
+    setInsights([]);
+  };
+
+  const handleSpeedChange = (newSpeed: SimulationSpeed) => {
+    setSimSpeed(newSpeed);
+    if (engineRef.current) {
+      engineRef.current.setSpeed(newSpeed);
+    }
+  };
+
+  // Server crash/restore dynamic injection
+  const handleToggleServerFail = (serverId: string) => {
+    setServers((prev) =>
+      prev.map((s) =>
+        s.id === serverId
+          ? {
+              ...s,
+              isManualFailed: !s.isManualFailed,
+              status: !s.isManualFailed ? "offline" : "healthy",
+            }
+          : s
+      )
+    );
+
+    if (engineRef.current) {
+      engineRef.current.toggleServerFailure(serverId);
+    }
+  };
+
+  // Export handlers
+  const handleExportJson = () => {
+    if (!finalResults) return;
+    const exportData = {
+      exportedAt: new Date().toISOString(),
+      workloadConfig,
+      servers,
+      selectedAlgorithms,
+      results: finalResults,
+      insights,
+    };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `arena-evaluation-${Date.now()}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const handleExportCsv = () => {
+    if (!finalResults) return;
+    const headers = [
+      "Algorithm",
+      "TotalRequests",
+      "SuccessfulRequests",
+      "FailedRequests",
+      "ThroughputRps",
+      "AvgLatencyMs",
+      "MedianLatencyMs",
+      "P95LatencyMs",
+      "MinLatencyMs",
+      "MaxLatencyMs",
+      "AvgQueueWaitMs",
+      "LoadImbalanceScore",
+    ];
+
+    const rows = Object.values(finalResults).map((m) => [
+      m.algorithmId,
+      m.totalRequests,
+      m.successfulRequests,
+      m.failedRequests,
+      m.throughputRps.toFixed(2),
+      m.avgResponseTimeMs.toFixed(2),
+      m.medianResponseTimeMs.toFixed(2),
+      m.p95ResponseTimeMs.toFixed(2),
+      m.minResponseTimeMs.toFixed(2),
+      m.maxResponseTimeMs.toFixed(2),
+      m.avgQueueWaitMs.toFixed(2),
+      m.loadImbalanceScore.toFixed(4),
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", encodedUri);
+    downloadAnchor.setAttribute("download", `arena-evaluation-${Date.now()}.csv`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
 
   return (
     <div className="orbit-page">
       <Navbar />
 
-      <main className="orbit-main page-enter-anim">
-        <Link href="/simulate" className="back-link">
-          ← Back to Simulation Labs
-        </Link>
+      <main className="orbit-main page-enter-anim" style={{ maxWidth: "1280px", margin: "0 auto", padding: "24px 20px 80px" }}>
+        {/* Navigation & Breadcrumb */}
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <Link href="/simulate" className="back-link flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
+            ← Back to Simulation Labs
+          </Link>
 
-        {/* Page Header */}
-        <div style={{ marginBottom: "32px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-            <div
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "10px",
-                backgroundColor: "rgba(167, 139, 250, 0.15)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 4l3 3-3 3" />
-                <path d="M18 20l3-3-3-3" />
-                <circle cx="6" cy="7" r="2.5" />
-                <circle cx="6" cy="17" r="2.5" />
-                <path d="M8.5 7h4a4 4 0 0 1 4 4v2a4 4 0 0 0 4 4h0.5" />
-                <path d="M8.5 17h4a4 4 0 0 0 4-4V11a4 4 0 0 1 4-4h0.5" />
-              </svg>
-            </div>
-            <div>
-              <h1 style={{ fontSize: "2.2rem", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.02em" }}>
-                Algorithm Arena
-              </h1>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-1 rounded-full text-[11px] font-mono bg-purple-500/10 text-purple-300 border border-purple-500/20">
+              Interactive Educational Lab
+            </span>
+            <span className="px-2.5 py-1 rounded-full text-[11px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Discrete-Event Engine
+            </span>
           </div>
-          <p style={{ color: "#94a3b8", fontSize: "1.05rem" }}>
-            Compare Round Robin, Least Connections, and PPO Reinforcement Learning under simulated production traffic.
+        </div>
+
+        {/* Page Title & Intro */}
+        <div className="mb-8">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
+            <span className="text-purple-400">⚡</span> Algorithm Arena
+          </h1>
+          <p className="text-sm text-slate-400 mt-2 max-w-3xl leading-relaxed">
+            Experiment with, benchmark, and compare state-of-the-art load-balancing algorithms under identical synthetic workloads.
+            Observe real queue depths, server saturation, and latency distributions with live failure injection.
           </p>
         </div>
 
-        {/* Control Toolbar */}
-        <div
-          style={{
-            backgroundColor: "rgba(18, 22, 31, 0.75)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "14px",
-            padding: "20px 24px",
-            marginBottom: "28px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "16px",
-          }}
-        >
-          <div>
-            <span style={{ fontSize: "0.78rem", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: "8px" }}>
-              Routing Policy:
-            </span>
-            <div style={{ display: "flex", gap: "10px" }}>
-              {[
-                { id: "ppo", label: "🧠 PPO (Adaptive RL)", color: "#a78bfa" },
-                { id: "least_conn", label: "⚖️ Least Connections", color: "#34d399" },
-                { id: "round_robin", label: "🔄 Round Robin", color: "#94a3b8" },
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setAlgorithm(item.id as any)}
-                  style={{
-                    padding: "8px 16px",
-                    borderRadius: "8px",
-                    fontSize: "0.88rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    border: algorithm === item.id ? `1px solid ${item.color}` : "1px solid rgba(255,255,255,0.08)",
-                    backgroundColor: algorithm === item.id ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.2)",
-                    color: algorithm === item.id ? item.color : "#94a3b8",
-                    boxShadow: algorithm === item.id ? `0 0 16px ${item.color}33` : "none",
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  {item.label}
-                </button>
-              ))}
+        {/* SECTION 1: ALGORITHM SELECTOR */}
+        <section className="mb-8">
+          <AlgorithmSelector
+            selectedAlgorithms={selectedAlgorithms}
+            onToggleAlgorithm={handleToggleAlgorithm}
+            serverWeights={serverWeights}
+            onUpdateWeight={handleUpdateWeight}
+            serverIds={servers.map((s) => s.id)}
+          />
+        </section>
+
+        {/* SECTION 2: WORKLOAD & SIMULATION CONTROLS */}
+        <section className="mb-8">
+          <ArenaControls
+            state={simState}
+            speed={simSpeed}
+            progressPercent={progressPercent}
+            virtualTimeMs={virtualTimeMs}
+            workloadConfig={workloadConfig}
+            onStart={handleStartSimulation}
+            onPause={handlePauseSimulation}
+            onResume={handleResumeSimulation}
+            onStop={handleStopSimulation}
+            onReset={handleResetSimulation}
+            onSpeedChange={handleSpeedChange}
+            onOpenWorkloadModal={() => setIsWorkloadModalOpen(true)}
+            onOpenServerModal={() => setIsServerModalOpen(true)}
+            onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
+            onOpenGuideModal={() => setIsGuideModalOpen(true)}
+            canStart={selectedAlgorithms.length > 0 && servers.length > 0}
+          />
+        </section>
+
+        {/* SECTION 3: LIVE VISUAL ARENA LANES */}
+        <section className="mb-8">
+          <VisualArenaLanes
+            selectedAlgorithms={selectedAlgorithms}
+            servers={servers}
+            laneMetrics={laneMetrics}
+            laneResults={laneResults}
+            onToggleServerFail={handleToggleServerFail}
+            isSimulating={simState === "running" || simState === "paused"}
+          />
+        </section>
+
+        {/* SECTION 4: REAL-TIME EVENT CONSOLE */}
+        <section className="mb-8">
+          <RealTimeEventConsole
+            events={events}
+            selectedAlgorithms={selectedAlgorithms}
+            onClearEvents={() => setEvents([])}
+          />
+        </section>
+
+        {/* SECTION 5: PERFORMANCE EVALUATION & BENCHMARK MATRIX */}
+        <section className="mb-8">
+          {finalResults ? (
+            <PerformanceEvaluation
+              results={finalResults}
+              selectedAlgorithms={selectedAlgorithms}
+              servers={servers}
+              insights={insights}
+              onOpenHistory={() => setIsHistoryModalOpen(true)}
+              onExportJson={handleExportJson}
+              onExportCsv={handleExportCsv}
+            />
+          ) : (
+            <div className="rounded-2xl border border-[#21262d] bg-[#0d1117]/60 p-8 text-center backdrop-blur-md">
+              <span className="text-3xl block mb-2">📊</span>
+              <h3 className="text-base font-semibold text-white mb-1">
+                Awaiting Simulation Execution
+              </h3>
+              <p className="text-xs text-slate-400 max-w-md mx-auto">
+                Press &quot;Start Simulation&quot; above to process requests across the selected algorithms. Full benchmark metrics, response time distributions, and comparative insights will appear here upon completion.
+              </p>
             </div>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <button
-              onClick={() => {
-                setRequestCount((c) => c + 50);
-                setNodes((prev) =>
-                  prev.map((n) => ({
-                    ...n,
-                    load: Math.min(94, n.load + Math.floor(Math.random() * 8)),
-                  }))
-                );
-              }}
-              style={{
-                padding: "8px 16px",
-                backgroundColor: "rgba(167, 139, 250, 0.15)",
-                border: "1px solid rgba(167, 139, 250, 0.3)",
-                borderRadius: "8px",
-                color: "#a78bfa",
-                fontSize: "0.88rem",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              +50 Requests
-            </button>
-
-            <button
-              onClick={() => setIsStreaming(!isStreaming)}
-              style={{
-                padding: "8px 20px",
-                backgroundColor: isStreaming ? "#ef4444" : "#a855f7",
-                border: "none",
-                borderRadius: "8px",
-                color: "#ffffff",
-                fontSize: "0.88rem",
-                fontWeight: 600,
-                cursor: "pointer",
-                boxShadow: isStreaming ? "0 0 16px rgba(239, 68, 68, 0.4)" : "0 0 16px rgba(168, 85, 247, 0.4)",
-                transition: "all 0.2s ease",
-              }}
-            >
-              {isStreaming ? "■ Stop Stream" : "▶ Start Live Stream"}
-            </button>
-          </div>
-        </div>
-
-        {/* Server Nodes Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "18px", marginBottom: "32px" }}>
-          {nodes.map((node) => {
-            const barColor = node.load > 75 ? "#ef4444" : node.load > 50 ? "#f59e0b" : "#10b981";
-            return (
-              <div
-                key={node.id}
-                style={{
-                  backgroundColor: "rgba(18, 22, 31, 0.75)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  borderRadius: "12px",
-                  padding: "20px",
-                  transition: "all 0.25s ease",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
-                  <span style={{ fontSize: "0.95rem", fontWeight: 700, color: "#ffffff" }}>{node.name.split(" ")[0]}</span>
-                  <span style={{ fontSize: "0.76rem", color: "#94a3b8", fontFamily: "monospace" }}>{node.region}</span>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.84rem", color: "#94a3b8", marginBottom: "6px" }}>
-                  <span>Load Utilization</span>
-                  <span style={{ color: barColor, fontWeight: 700 }}>{node.load}%</span>
-                </div>
-
-                <div style={{ width: "100%", height: "8px", backgroundColor: "rgba(255,255,255,0.06)", borderRadius: "999px", overflow: "hidden", marginBottom: "16px" }}>
-                  <div
-                    style={{
-                      width: `${node.load}%`,
-                      height: "100%",
-                      backgroundColor: barColor,
-                      borderRadius: "999px",
-                      transition: "width 0.4s ease-out, background-color 0.3s ease",
-                      boxShadow: `0 0 8px ${barColor}`,
-                    }}
-                  />
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", color: "#94a3b8" }}>
-                  <span>Connections: <strong style={{ color: "#ffffff" }}>{node.connections}</strong></span>
-                  <span>Latency: <strong style={{ color: "#ffffff" }}>{node.latency}ms</strong></span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Telemetry Analytics Card */}
-        <div
-          style={{
-            backgroundColor: "rgba(167, 139, 250, 0.06)",
-            border: "1px solid rgba(167, 139, 250, 0.2)",
-            borderRadius: "14px",
-            padding: "24px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "24px",
-          }}
-        >
-          <div>
-            <span style={{ fontSize: "0.82rem", color: "#a78bfa", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.06em", display: "block" }}>
-              Total Volume: {requestCount.toLocaleString()} Requests
-            </span>
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#ffffff", marginTop: "4px", marginBottom: "6px" }}>
-              {algorithm === "ppo" && "PPO Reinforcement Learning Active"}
-              {algorithm === "least_conn" && "Least Connections Algorithm Active"}
-              {algorithm === "round_robin" && "Static Round Robin Routing Active"}
-            </h3>
-            <p style={{ fontSize: "0.92rem", color: "#94a3b8", maxWidth: "620px", lineHeight: 1.5 }}>
-              {algorithm === "ppo" &&
-                "PPO uses deep actor-critic networks to predict server load bottlenecks in advance, maintaining optimal balance with 38% lower variance than static heuristics."}
-              {algorithm === "least_conn" &&
-                "Least Connections routes to the node with the fewest open sockets, but is blind to task processing duration."}
-              {algorithm === "round_robin" &&
-                "Round Robin sequentially alternates servers regardless of node capacity, creating severe load hot-spots during traffic surges."}
-            </p>
-          </div>
-
-          <div style={{ display: "flex", gap: "28px" }}>
-            <div>
-              <div style={{ fontSize: "0.76rem", color: "#94a3b8", fontWeight: 700 }}>AVG LATENCY</div>
-              <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#34d399" }}>
-                {algorithm === "ppo" ? "12.4ms" : algorithm === "least_conn" ? "18.2ms" : "28.6ms"}
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: "0.76rem", color: "#94a3b8", fontWeight: 700 }}>IMBALANCE SCORE</div>
-              <div style={{ fontSize: "1.4rem", fontWeight: 800, color: algorithm === "ppo" ? "#a78bfa" : "#f59e0b" }}>
-                {algorithm === "ppo" ? "0.03" : algorithm === "least_conn" ? "0.19" : "0.58"}
-              </div>
-            </div>
-          </div>
-        </div>
+          )}
+        </section>
       </main>
+
+      {/* MODALS */}
+      <WorkloadConfigModal
+        isOpen={isWorkloadModalOpen}
+        onClose={() => setIsWorkloadModalOpen(false)}
+        config={workloadConfig}
+        onSave={(newConfig) => {
+          setWorkloadConfig(newConfig);
+          setIsWorkloadModalOpen(false);
+        }}
+      />
+
+      <ServerManagerModal
+        isOpen={isServerModalOpen}
+        onClose={() => setIsServerModalOpen(false)}
+        servers={servers}
+        onUpdateServers={(newServers) => {
+          setServers(newServers);
+          // Set default weight for new servers if missing
+          newServers.forEach((s) => {
+            if (serverWeights[s.id] === undefined) {
+              setServerWeights((prev) => ({ ...prev, [s.id]: s.weight || 2 }));
+            }
+          });
+        }}
+        onResetDefaults={() => {
+          setServers(DEFAULT_SERVERS);
+          setServerWeights({
+            "srv-alpha": 4,
+            "srv-beta": 2,
+            "srv-gamma": 2,
+            "srv-delta": 1,
+          });
+        }}
+      />
+
+      <HistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+        onSelectRun={(run) => {
+          setFinalResults(run.results);
+          setInsights(run.insights);
+          setIsHistoryModalOpen(false);
+        }}
+      />
+
+      <EducationalDrawer
+        isOpen={isGuideModalOpen}
+        onClose={() => setIsGuideModalOpen(false)}
+        defaultAlgo={selectedAlgorithms[0] || "round_robin"}
+      />
     </div>
   );
 }
